@@ -16,7 +16,12 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   try {
-    const { prompt } = req.body || {};
+    // Захист: приймаємо запит лише якщо прийшло правильне секретне слово.
+    // Секрет лежить у змінній оточення STUDIO_SECRET (додаси поруч з GEMINI_KEY).
+    const { prompt, secret } = req.body || {};
+    if (!secret || secret !== process.env.STUDIO_SECRET) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
     if (!prompt) return res.status(400).json({ error: "no prompt" });
 
     const result = await ai.models.generateContent({
