@@ -1,0 +1,8 @@
+{
+  "name": "carousel-nano-banana",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^1.0.0"
+  }
+}
