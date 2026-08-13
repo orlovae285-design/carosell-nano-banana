@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Carousel Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<style>html,body,#root{margin:0;padding:0;background:#0C0C10;min-height:100vh;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useRef } = React;
+
+/* ------------------------------------------------------------------ */
+/*  ДАНІ                                                               */
+/* ------------------------------------------------------------------ */
+
+const NICHES = [
+  "Психологія", "Бізнес і коучинг", "Трансформація / езотерика",
+  "Б'юті та естетика", "Особистий бренд", "Маркетинг і SMM",
+  "Фітнес і тіло", "Фінанси та гроші", "Стосунки", "Батьківство",
+  "Здоров'я і нейро", "Їжа та рецепти",
+];
+
+const FORMATS = [
+  { id: "hpsr", label: "Гачок → Біль → Рішення → Результат" },
+  { id: "list", label: "Список порад / фішок" },
+  { id: "story", label: "Особиста історія" },
+  { id: "myth", label: "Міфи проти правди" },
+  { id: "mistakes", label: "Помилки, яких припускаються" },
+  { id: "guide", label: "Покроковий міні-гайд" },
+  { id: "before", label: "До / Після" },
+];
+
+// Найпопулярніші стилі тексту
+const STYLES = [
+  { id: "emotional", label: "Емоційний", note: "тепло, чуттєво, від серця" },
+  { id: "expert", label: "Експертний", note: "чітко, з аргументами й фактами" },
+  { id: "bold", label: "Провокативний", note: "сміливо, з викликом, гостро" },
+  { id: "friend", label: "Дружній", note: "просто, ніби порада подрузі" },
+  { id: "story", label: "Сторітелінг", note: "як історія з життя" },
+  { id: "motiv", label: "Мотиваційний", note: "надихає й підіймає" },
+  { id: "humor", label: "З гумором", note: "легко, з іронією" },
+];
+
+const VOLUMES = [
+  { id: "min", label: "Мінімальна", desc: "лише сильний заголовок, майже без тексту" },
+  { id: "med", label: "Середня", desc: "заголовок + одне коротке речення" },
+  { id: "max", label: "Велика", desc: "заголовок + 2-3 короткі речення" },
+];
+
+// Візуальні стилі каруселі (10 різних характерів)
+const THEMES = {
+  noir:      { name: "Ніч і золото", bg: "#0B0B0D", ink: "#EFE7D6", sub: "#B7A98A", accent: "#C6A15B", font: "'Cormorant Garamond', serif", cover: 800, border: "1px solid rgba(198,161,91,.45)", mood: "dark luxury, near-black, gold accents, cinematic, elegant" },
+  royal:     { name: "Королівський синь", bg: "#0E1630", ink: "#EAF0FF", sub: "#9AA8CE", accent: "#D4B15F", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(212,177,95,.4)", mood: "deep navy, gold, premium, regal, soft light" },
+  emerald:   { name: "Смарагд", bg: "#0C1F17", ink: "#EAF6EE", sub: "#8FB8A2", accent: "#E4C77A", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(228,199,122,.35)", mood: "deep emerald green, gold, botanical, luxurious" },
+  editorial: { name: "Обкладинка", bg: "#F1EDE3", ink: "#141210", sub: "#6B6152", accent: "#E24236", font: "'Unbounded', sans-serif", cover: 800, border: "none", mood: "editorial cream paper, bold black, red accent, magazine" },
+  magazine:  { name: "Журнал", bg: "#FFFFFF", ink: "#0F0F0F", sub: "#7A7A7A", accent: "#C0392B", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid #EAEAEA", mood: "clean white magazine spread, elegant serif, minimal" },
+  gradient:  { name: "Градієнт", bg: "linear-gradient(150deg,#5B21B6 0%,#9D174D 55%,#DB2777 100%)", ink: "#FFFFFF", sub: "rgba(255,255,255,.82)", accent: "#FDE68A", font: "'Manrope', sans-serif", cover: 800, border: "none", mood: "vibrant purple-pink gradient, glowing, energetic" },
+  coral:     { name: "Кораловий", bg: "#FBEDE7", ink: "#3A2018", sub: "#9C6F5E", accent: "#E2603E", font: "'Unbounded', sans-serif", cover: 700, border: "none", mood: "warm coral and peach, soft sunlight, cozy premium" },
+  pastel:    { name: "Пастель", bg: "linear-gradient(160deg,#F7E9F0,#E8EEF9)", ink: "#3A2E42", sub: "#8E7F98", accent: "#B06CB0", font: "'Manrope', sans-serif", cover: 700, border: "none", mood: "soft pastel pink and blue, airy, delicate, dreamy" },
+  minimal:   { name: "Мінімал", bg: "#FFFFFF", ink: "#111111", sub: "#8A8A8A", accent: "#111111", font: "'Manrope', sans-serif", cover: 700, border: "1px solid #ECECEC", mood: "pure white, black type, lots of space, swiss minimal" },
+  neon:      { name: "Неон", bg: "#07070C", ink: "#EAFBFF", sub: "#7FB8C0", accent: "#57E7C2", font: "'Unbounded', sans-serif", cover: 700, border: "1px solid rgba(87,231,194,.35)", mood: "dark background, neon mint glow, futuristic, techy" },
+  oldpaper:  { name: "Старий папір", bg: "radial-gradient(130% 120% at 25% 15%, #F3E9CF, #E4D3AC 55%, #D6C293)", ink: "#3A2E1C", sub: "#8A745A", accent: "#9A6E3A", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(154,110,58,.4)", mood: "aged vintage parchment paper, sepia tones, antique, warm, textured" },
+  bordeaux:  { name: "Вино", bg: "linear-gradient(160deg,#2B0E14,#3E1520)", ink: "#F3E5D8", sub: "#C9A38F", accent: "#D4A35C", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(212,163,92,.4)", mood: "deep bordeaux wine red, gold accents, moody, luxurious" },
+  mocha:     { name: "Мокко", bg: "#2A211B", ink: "#F0E6DA", sub: "#B9A38C", accent: "#CBA06A", font: "'Manrope', sans-serif", cover: 700, border: "1px solid rgba(203,160,106,.3)", mood: "warm mocha brown, coffee tones, cozy premium, soft light" },
+  rose:      { name: "Троянда", bg: "linear-gradient(160deg,#F6E2E6,#EFD0D8)", ink: "#4A2530", sub: "#9E6B79", accent: "#C25E7A", font: "'Cormorant Garamond', serif", cover: 700, border: "none", mood: "soft blush rose pink, romantic, delicate, feminine, elegant" },
+  steel:     { name: "Сталь", bg: "linear-gradient(160deg,#20242B,#2E343D)", ink: "#EAEEF3", sub: "#9AA6B2", accent: "#7FB0D9", font: "'Manrope', sans-serif", cover: 700, border: "1px solid rgba(127,176,217,.3)", mood: "cool graphite steel gray, blue accent, modern, sharp, corporate premium" },
+  ocean:     { name: "Океан", bg: "linear-gradient(160deg,#06373D,#0A4E52)", ink: "#EAFBF7", sub: "#8FC6C2", accent: "#F0C987", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(240,201,135,.3)", mood: "deep teal ocean green, warm gold accent, serene, luxurious" },
+};
+
+// 10 найпопулярніших шрифтів 2026 (усі з кирилицею)
+const FONTS = [
+  { id: "unbounded", label: "Unbounded", css: "'Unbounded', sans-serif" },
+  { id: "montserrat", label: "Montserrat", css: "'Montserrat', sans-serif" },
+  { id: "playfair", label: "Playfair Display", css: "'Playfair Display', serif" },
+  { id: "cormorant", label: "Cormorant", css: "'Cormorant Garamond', serif" },
+  { id: "manrope", label: "Manrope", css: "'Manrope', sans-serif" },
+  { id: "onest", label: "Onest", css: "'Onest', sans-serif" },
+  { id: "golos", label: "Golos Text", css: "'Golos Text', sans-serif" },
+  { id: "oswald", label: "Oswald", css: "'Oswald', sans-serif" },
+  { id: "rubik", label: "Rubik", css: "'Rubik', sans-serif" },
+  { id: "comfortaa", label: "Comfortaa", css: "'Comfortaa', cursive" },
+  { id: "prata", label: "Prata", css: "'Prata', serif" },
+  { id: "nunito", label: "Nunito", css: "'Nunito', sans-serif" },
+  { id: "caveat", label: "Caveat (від руки)", css: "'Caveat', cursive" },
+  { id: "yeseva", label: "Yeseva One", css: "'Yeseva One', serif" },
+  { id: "raleway", label: "Raleway", css: "'Raleway', sans-serif" },
+  { id: "lora", label: "Lora", css: "'Lora', serif" },
+];
+
+// Мова промптів для картинок
+const LANGS = [
+  { id: "en", label: "English" },
+  { id: "uk", label: "Українська" },
+  { id: "de", label: "Deutsch" },
+];
+
+// Моделі Nano Banana та ціна за 1 зображення (€, орієнтовно)
+const NB_MODELS = [
+  { id: "lite", label: "Nano Banana 2 Lite", price: 0.02, model: "gemini-3.1-flash-lite-image" },
+  { id: "nb2", label: "Nano Banana 2", price: 0.045, model: "gemini-3.1-flash-image-preview" },
+  { id: "pro", label: "Nano Banana Pro", price: 0.13, model: "gemini-3-pro-image-preview" },
+];
+
+const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD", sub: "#8E8A80", gold: "#C6A15B", live: "#FF5D57" };
+
+/* ------------------------------------------------------------------ */
+/*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
+/* ------------------------------------------------------------------ */
+
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang }) {
+  const fmt = FORMATS.find((f) => f.id === format)?.label || format;
+  const st = STYLES.find((s) => s.id === style);
+  const vol = VOLUMES.find((v) => v.id === volume);
+  const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
+  const volLine =
+    volume === "min" ? "Мінімум тексту: тільки сильний заголовок. body лишай порожнім або до 4 слів."
+    : volume === "max" ? "Більше тексту: заголовок + 2-3 короткі речення в body. Без води."
+    : "Середньо: заголовок + одне коротке речення в body.";
+
+  return `Ти — український контент-креатор, який пише вірусні каруселі для Instagram. Ти НЕ штучний інтелект — ти жива людина з голосом і думкою.
+
+ЗАВДАННЯ: зроби карусель.
+Напрямок: ${niche}
+Тема: ${topic}
+Формат: ${fmt}
+Стиль тексту: ${st?.label} (${st?.note})
+Обсяг тексту на слайд: ${vol?.label} — ${volLine}
+Кількість слайдів: ${count}
+${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}
+
+ЯК ПИСАТИ (критично):
+- Українською, живою мовою, як реальна людина. Витримуй обраний стиль тексту.
+- Перший слайд — гачок, що зупиняє палець за секунду.
+- Кожен слайд лишає бажання гортати далі.
+- Речення різної довжини. Коротко. Потім довше.
+- Конкретика замість води: цифри, приклади, деталі.
+- ЗАБОРОНЕНО: «у сучасному світі», «важливо зазначити», «розкрити потенціал», канцелярит, кліше, зайві тире.
+- НЕ додавай у текст слайдів службові слова типу «гачок», «біль», «рішення», номери слайдів чи «збережи» — тільки живий контент.
+
+Поверни ЛИШЕ валідний JSON без пояснень і без \`\`\`:
+{
+ "hooks": ["3 різні варіанти гачка для обкладинки, кожен до 12 слів"],
+ "slides": [ {"title":"головна думка, до 14 слів","body":"за обсягом вище або порожньо"${images ? `,"img":"short ${langName} prompt for a premium image for this slide"` : ""}} ],
+ "caption":"підпис до посту, 2-4 живих речення",
+ "hashtags":["3-5 хештегів"],
+ "cta":"заклик одним рядком"
+}
+${images ? `Для кожного слайда додай "img": короткий (до 22 слів) промпт МОВОЮ ${langName} для генерації преміальної картинки у стилі: ${themeMood}. Єдина естетика на всю карусель, кінематографічне світло, елегантно, місце під текст.` : ""}
+slides має містити рівно ${count} елементів. Перший — обкладинка (title = найсильніший гачок). Тримай усе стисло, щоб відповідь вмістилася повністю.`;
+}
+
+// Стійкий розбір JSON: спершу нормально, потім рятуємо слайди з обрізаної відповіді
+function tolerantParse(text) {
+  const start = text.indexOf("{"), end = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1) {
+    try { return JSON.parse(text.slice(start, end + 1)); } catch (e) {}
+  }
+  // Рятівний режим: витягуємо поля навіть з обрізаного JSON
+  const grab = (re) => { const m = text.match(re); return m ? m[1] : ""; };
+  const list = (key) => {
+    const m = text.match(new RegExp(`"${key}"\\s*:\\s*\\[([\\s\\S]*?)\\]`));
+    if (!m) return [];
+    return (m[1].match(/"((?:[^"\\]|\\.)*)"/g) || []).map((s) => s.slice(1, -1).replace(/\\"/g, '"'));
+  };
+  const slides = [];
+  const re = /\{\s*"title"\s*:\s*"((?:[^"\\]|\\.)*)"\s*(?:,\s*"body"\s*:\s*"((?:[^"\\]|\\.)*)")?/g;
+  let mm;
+  while ((mm = re.exec(text)) !== null) {
+    slides.push({ title: mm[1].replace(/\\"/g, '"'), body: (mm[2] || "").replace(/\\"/g, '"') });
+  }
+  if (!slides.length) throw new Error("parse");
+  return {
+    hooks: list("hooks"),
+    slides,
+    caption: grab(/"caption"\s*:\s*"((?:[^"\\]|\\.)*)"/),
+    hashtags: list("hashtags"),
+    cta: grab(/"cta"\s*:\s*"((?:[^"\\]|\\.)*)"/),
+  };
+}
+
+async function callClaude(prompt, useTools) {
+  const res = await fetch("/api/text", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, secret: NB_SECRET, search: !!useTools }),
+  });
+  if (!res.ok) throw new Error("net");
+  const data = await res.json();
+  return data.text || "";
+}
+
+// Крок 1: тільки текст каруселі (без картинок) — завжди влазить у ліміт
+async function generateText(opts) {
+  const text = await callClaude(buildPrompt({ ...opts, images: false }), opts.trends);
+  return tolerantParse(text);
+}
+
+// Крок 2: окремо — короткі промпти картинок під наявні слайди
+async function generateImages({ slides, themeMood, lang }) {
+  const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
+  const titles = slides.map((s, i) => `${i + 1}. ${s.title}`).join("\n");
+  const prompt = `Return ONLY a JSON array of ${slides.length} short image prompts in ${langName}, one per slide below.
+Each prompt: under 20 words, premium cinematic aesthetic (${themeMood}), elegant lighting, clean background with empty space for text overlay.
+Vary the shot across slides (close-up, wide, side angle) but keep ONE consistent style.
+ABSOLUTELY NO text, no letters, no words, no captions, no watermark in the image.
+Slides:
+${titles}
+Answer with just: ["prompt 1","prompt 2",...] and nothing else.`;
+  const text = await callClaude(prompt, false);
+  const s = text.indexOf("["), e = text.lastIndexOf("]");
+  if (s === -1 || e === -1) return slides.map(() => "");
+  try {
+    const arr = JSON.parse(text.slice(s, e + 1));
+    return slides.map((_, i) => arr[i] || "");
+  } catch (err) {
+    return slides.map(() => "");
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  СЛАЙД                                                              */
+/* ------------------------------------------------------------------ */
+
+// Твій сервер Nano Banana (Vercel) + секретне слово
+const NB_ENDPOINT = "/api/image";
+const NB_SECRET = "Olena!2026-studio";
+
+async function callNanoBanana(prompt, model) {
+  const res = await fetch(NB_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, model, secret: NB_SECRET }),
+  });
+  if (!res.ok) throw new Error("nb " + res.status);
+  const data = await res.json();
+  if (!data.image) throw new Error("no image");
+  return data.image; // data-URL картинки
+}
+
+// Безключова генерація картинки за промптом (для перегляду в додатку)
+function imgUrl(prompt, seed) {
+  const q = encodeURIComponent((prompt || "") + ", premium editorial, cinematic lighting, high detail, clean background with empty space for text, absolutely no text, no letters, no words, no watermark");
+  return `https://image.pollinations.ai/prompt/${q}?width=1024&height=1280&nologo=true&model=flux&seed=${seed || 1}`;
+}
+
+function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, variant }) {
+  const t = theme;
+  const titleFont = fontCss || t.font;
+  const hasImg = !!imgSrc;
+  const ink = hasImg ? "#FFFFFF" : t.ink;
+  const sub = hasImg ? "rgba(255,255,255,.85)" : t.sub;
+  const shadow = hasImg ? "0 1px 12px rgba(0,0,0,.55)" : "none";
+  const sizing = variant === "rail"
+    ? { width: "min(72vw, 260px)", flex: "0 0 auto", scrollSnapAlign: "center" }
+    : { width: "100%" };
+  return (
+    <div
+      style={{
+        position: "relative", aspectRatio: "4 / 5", ...sizing,
+        borderRadius: 20, background: t.bg, color: ink, border: t.border,
+        boxShadow: "0 18px 50px rgba(0,0,0,.45)", overflow: "hidden",
+        containerType: "inline-size",
+      }}
+    >
+      {hasImg && (
+        <>
+          <img src={imgSrc} alt="" loading="lazy"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.8) 100%)" }} />
+        </>
+      )}
+
+      <div style={{ position: "relative", height: "100%", padding: "8% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "4%" }}>
+        <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
+
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 9cqw, 30px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 600, textShadow: shadow, overflowWrap: "anywhere" }}>
+            {data.title}
+          </p>
+          {data.body ? (
+            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "4%", marginBottom: 0, fontSize: "clamp(10px, 4.3cqw, 15px)", lineHeight: 1.45, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
+              {data.body}
+            </p>
+          ) : null}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: isLast ? "flex-start" : "flex-end", flex: "0 0 auto" }}>
+          {isLast ? (
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 22, height: 2, background: t.accent, borderRadius: 2 }} />
+              <span style={{ fontFamily: "'Manrope',sans-serif", fontSize: "clamp(9px, 4.4cqw, 13px)", color: t.accent, fontWeight: 600, letterSpacing: .3 }}>
+                зберігай та підпишись
+              </span>
+            </span>
+          ) : (
+            <span style={{ fontSize: "clamp(16px, 8cqw, 26px)", lineHeight: 1, color: t.accent, fontWeight: 700 }}>→</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ГОЛОВНИЙ КОМПОНЕНТ                                                  */
+/* ------------------------------------------------------------------ */
+
+function App() {
+  const [niche, setNiche] = useState("Психологія");
+  const [customNiche, setCustomNiche] = useState("");
+  const [topic, setTopic] = useState("");
+  const [format, setFormat] = useState("hpsr");
+  const [style, setStyle] = useState("emotional");
+  const [volume, setVolume] = useState("med");
+  const [count, setCount] = useState(6);
+  const [trends, setTrends] = useState(false);
+  const [imgMode, setImgMode] = useState("off"); // off | prompts | paid
+  const [nbModel, setNbModel] = useState("lite");
+  const [promptLang, setPromptLang] = useState("en");
+  const [themeId, setThemeId] = useState("noir");
+  const [fontId, setFontId] = useState("auto");
+  const [viewMode, setViewMode] = useState("grid");
+
+  const [loading, setLoading] = useState(false);
+  const [genStatus, setGenStatus] = useState("");
+  const [error, setError] = useState("");
+  const [result, setResult] = useState(null);
+  const [copied, setCopied] = useState("");
+
+  const railRef = useRef(null);
+  const slideRefs = useRef([]);
+  const [downloading, setDownloading] = useState(false);
+  const theme = THEMES[themeId];
+  const activeNiche = niche === "custom" ? customNiche.trim() : niche;
+  const imagesOn = imgMode !== "off";
+  const nb = NB_MODELS.find((m) => m.id === nbModel) || NB_MODELS[0];
+
+  async function run() {
+    if (!topic.trim()) return setError("Впиши тему каруселі — про що вона.");
+    if (!activeNiche) return setError("Обери або впиши напрямок.");
+    setError(""); setLoading(true); setResult(null);
+    try {
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang };
+      const r = await generateText(base);
+      if (!r.slides || !r.slides.length) throw new Error("empty");
+      if (imagesOn) {
+        try {
+          const imgs = await generateImages({ slides: r.slides, themeMood: theme.mood, lang: promptLang });
+          r.slides = r.slides.map((s, i) => ({ ...s, img: imgs[i] || "" }));
+          if (imgMode === "paid") {
+            for (let i = 0; i < r.slides.length; i++) {
+              setGenStatus(`Малюю картинку ${i + 1}/${r.slides.length}…`);
+              try {
+                r.slides[i].realImg = await callNanoBanana(r.slides[i].img, nbModel);
+              } catch (e) { r.slides[i].realImg = ""; }
+            }
+            setGenStatus("");
+          }
+        } catch (e) { /* картинки не критичні — показуємо текст */ }
+      }
+      slideRefs.current = [];
+      setResult(r);
+    } catch (e) {
+      setError("Не вдалося зібрати карусель. Спробуй ще раз або зменш кількість слайдів.");
+    } finally { setLoading(false); }
+  }
+
+  function surprise() {
+    const keys = Object.keys(THEMES);
+    setThemeId(keys[Math.floor(Math.random() * keys.length)]);
+    setFormat(FORMATS[Math.floor(Math.random() * FORMATS.length)].id);
+    setStyle(STYLES[Math.floor(Math.random() * STYLES.length)].id);
+    setFontId(FONTS[Math.floor(Math.random() * FONTS.length)].id);
+  }
+
+  function swapHook(h) {
+    if (!result) return;
+    const slides = [...result.slides];
+    slides[0] = { ...slides[0], title: h };
+    setResult({ ...result, slides, hooks: [h, ...result.hooks.filter((x) => x !== h)] });
+  }
+
+  function copy(text, tag) {
+    navigator.clipboard?.writeText(text);
+    setCopied(tag); setTimeout(() => setCopied(""), 1400);
+  }
+
+  async function loadHtml2Canvas() {
+    if (window.html2canvas) return window.html2canvas;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      s.onload = resolve; s.onerror = reject;
+      document.body.appendChild(s);
+    });
+    return window.html2canvas;
+  }
+
+  async function downloadSlides() {
+    if (!result) return;
+    setDownloading(true);
+    try {
+      const html2canvas = await loadHtml2Canvas();
+      for (let i = 0; i < slideRefs.current.length; i++) {
+        const node = slideRefs.current[i];
+        if (!node) continue;
+        const canvas = await html2canvas(node, { scale: 3, useCORS: true, backgroundColor: null });
+        const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `slide-${i + 1}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        await new Promise((r) => setTimeout(r, 250)); // щоб браузер не блокував серію завантажень
+      }
+    } catch (e) {
+      setError("Не вдалося зберегти картинки. Спробуй ще раз.");
+    } finally { setDownloading(false); }
+  }
+
+  const allText = result
+    ? result.slides.map((s, i) => `${i + 1}. ${s.title}${s.body ? "\n" + s.body : ""}`).join("\n\n") +
+      "\n\n" + (result.caption || "") + "\n\n" + (result.hashtags || []).join(" ")
+    : "";
+  const imgList = result?.slides?.filter((s) => s.img)
+    .map((s, i) => `${i + 1}. ${s.img} — vertical 4:5, space for text`).join("\n\n");
+  const imgPrompts = imgList
+    ? `Встав у Google AI Studio → Image Generation. Модель: Nano Banana. Формат: 4:5.\n\n${imgList}`
+    : "";
+
+  return (
+    <div style={{ minHeight: "100vh", background: SHELL.bg, color: SHELL.ink, fontFamily: "'Manrope',sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&display=swap');
+        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        input,button,textarea,select{font-family:inherit;}
+        button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SHELL.gold};outline-offset:2px;}
+        .rail::-webkit-scrollbar{display:none;}
+      `}</style>
+
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "22px 18px 60px" }}>
+        <header style={{ marginBottom: 22 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 8, background: SHELL.gold }} />
+            <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: SHELL.sub }}>Carousel Studio</span>
+          </div>
+          <h1 style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 26, lineHeight: 1.1, margin: "10px 0 6px" }}>
+            Віральні каруселі,<br />що пише людина
+          </h1>
+          <p style={{ color: SHELL.sub, fontSize: 14, margin: 0 }}>
+            Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
+          </p>
+        </header>
+
+        <Label>Напрямок</Label>
+        <Row>
+          {NICHES.map((n) => <Chip key={n} active={niche === n} onClick={() => setNiche(n)}>{n}</Chip>)}
+          <Chip active={niche === "custom"} onClick={() => setNiche("custom")}>+ свій</Chip>
+        </Row>
+        {niche === "custom" && <Input value={customNiche} onChange={setCustomNiche} placeholder="Напр.: нумерологія для бізнесу" />}
+
+        <Label>Тема каруселі</Label>
+        <Input value={topic} onChange={setTopic} textarea placeholder="Про що карусель? Напр.: чому клієнти зникають після першої консультації" />
+
+        <Label>Формат</Label>
+        <Select value={format} onChange={setFormat} options={FORMATS.map((f) => [f.id, f.label])} />
+
+        <Label>Стиль тексту</Label>
+        <Row>
+          {STYLES.map((s) => <Chip key={s.id} active={style === s.id} onClick={() => setStyle(s.id)}>{s.label}</Chip>)}
+        </Row>
+
+        <Label>Обсяг тексту на слайд</Label>
+        <Row>
+          {VOLUMES.map((v) => <Chip key={v.id} active={volume === v.id} onClick={() => setVolume(v.id)}>{v.label}</Chip>)}
+        </Row>
+
+        <Label>Кількість слайдів</Label>
+        <Row>{[5, 6, 7, 9, 12, 15, 20].map((c) => <Chip key={c} active={count === c} onClick={() => setCount(c)}>{c}</Chip>)}</Row>
+
+        <ToggleRow on={trends} onToggle={() => setTrends((v) => !v)} color={SHELL.live}
+          title="Світові тренди" sub="Пошук свіжих кутів по темі в інтернеті" />
+        <Label>Картинки</Label>
+        <p style={{ fontSize: 12, color: SHELL.sub, margin: "-2px 0 8px" }}>За замовчуванням картинок немає. Увімкни потрібне:</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <ImgModeBtn active={imgMode === "prompts"} onClick={() => setImgMode(imgMode === "prompts" ? "off" : "prompts")}
+            title="Промпти для самостійної генерації" sub="У будь-яких АІ-додатках — копіюй та роби сам/а" badge="безкоштовно" badgeColor={SHELL.gold} />
+          <ImgModeBtn active={imgMode === "paid"} onClick={() => setImgMode(imgMode === "paid" ? "off" : "paid")}
+            title="Автогенерація картинок" sub="Необмежені картинки прямо в додатку" badge="10€/міс" badgeColor={SHELL.live} />
+        </div>
+
+        {imgMode !== "off" && (
+          <div style={{ marginTop: 10 }}>
+            <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 6px" }}>Мова промптів для картинок:</p>
+            <Row>
+              {LANGS.map((l) => (
+                <Chip key={l.id} active={promptLang === l.id} onClick={() => setPromptLang(l.id)}>{l.label}</Chip>
+              ))}
+            </Row>
+            {promptLang !== "en" && (
+              <p style={{ fontSize: 11, color: SHELL.sub, margin: "5px 0 0" }}>
+                Для найкращої якості картинок зазвичай краще English.
+              </p>
+            )}
+          </div>
+        )}
+
+        {imgMode === "paid" && (
+          <div style={{ background: SHELL.panel, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: 14, marginTop: 8 }}>
+            <p style={{ fontSize: 14, color: SHELL.ink, margin: "0 0 10px", lineHeight: 1.5 }}>
+              <b style={{ color: SHELL.gold }}>Nano Banana підключено ✓</b> — картинки генеруються прямо в застосунку через твій сервер.
+            </p>
+            <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 6px" }}>Модель (твоя собівартість за 1 зображення):</p>
+            <Row>
+              {NB_MODELS.map((m) => (
+                <Chip key={m.id} active={nbModel === m.id} onClick={() => setNbModel(m.id)}>
+                  {m.label} · €{m.price.toFixed(2)}
+                </Chip>
+              ))}
+            </Row>
+            <p style={{ fontSize: 12, color: SHELL.sub, margin: "8px 0 0", lineHeight: 1.5 }}>
+              Ліміт витрат: Google Cloud → Billing → Budgets &amp; alerts → бюджет напр. €10/міс.
+            </p>
+          </div>
+        )}
+
+        <Label>Стиль каруселі</Label>
+        <div className="rail" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 2px 8px", scrollbarWidth: "none" }}>
+          {Object.entries(THEMES).map(([id, th]) => (
+            <ThemeCard key={id} th={th} active={themeId === id} onClick={() => setThemeId(id)}
+              fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css} />
+          ))}
+        </div>
+
+        <Label>Шрифт</Label>
+        <div className="rail" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 2px 12px", scrollbarWidth: "none" }}>
+          <FontCard label="Авто" css={theme.font} active={fontId === "auto"} onClick={() => setFontId("auto")} />
+          {FONTS.map((f) => (
+            <FontCard key={f.id} label={f.label} css={f.css} active={fontId === f.id} onClick={() => setFontId(f.id)} />
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <button onClick={run} disabled={loading}
+            style={{ flex: 1, background: SHELL.gold, color: "#141210", border: "none", borderRadius: 14, padding: "15px", fontWeight: 700, fontSize: 15, cursor: loading ? "wait" : "pointer", opacity: loading ? .7 : 1 }}>
+            {loading ? "Збираю…" : result ? "Згенерувати ще" : "Створити карусель"}
+          </button>
+          <button onClick={surprise} title="Здивуй мене"
+            style={{ background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "0 16px", fontSize: 20, cursor: "pointer" }}>✦</button>
+        </div>
+
+        {error && <p style={{ color: SHELL.live, fontSize: 13, marginTop: 12 }}>{error}</p>}
+        {genStatus && <p style={{ color: SHELL.gold, fontSize: 13, marginTop: 12 }}>{genStatus}</p>}
+
+        {result && (
+          <div style={{ marginTop: 26 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: SHELL.sub }}>
+                {result.slides.length} слайдів
+              </span>
+              <div style={{ display: "flex", gap: 6 }}>
+                <Chip active={viewMode === "grid"} onClick={() => setViewMode("grid")}>Сітка</Chip>
+                <Chip active={viewMode === "rail"} onClick={() => setViewMode("rail")}>Стрічка</Chip>
+              </div>
+            </div>
+
+            {viewMode === "grid" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12, marginBottom: 8 }}>
+                {result.slides.map((s, i) => (
+                  <div key={i} ref={(el) => (slideRefs.current[i] = el)}>
+                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid"
+                      isCover={i === 0} isLast={i === result.slides.length - 1}
+                      fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
+                      imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div ref={railRef} className="rail"
+                style={{ display: "flex", gap: 14, overflowX: "auto", scrollSnapType: "x mandatory", padding: "4px 2px 14px", scrollbarWidth: "none" }}>
+                {result.slides.map((s, i) => (
+                  <div key={i} ref={(el) => (slideRefs.current[i] = el)} style={{ flex: "0 0 auto", scrollSnapAlign: "center" }}>
+                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="rail"
+                      isCover={i === 0} isLast={i === result.slides.length - 1}
+                      fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
+                      imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={downloadSlides} disabled={downloading}
+              style={{ width: "100%", marginTop: 10, marginBottom: 4, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: "13px", fontWeight: 600, fontSize: 14, cursor: downloading ? "wait" : "pointer", opacity: downloading ? .7 : 1 }}>
+              {downloading ? "Зберігаю картинки…" : "⬇ Завантажити слайди (PNG)"}
+            </button>
+
+            {imagesOn && result.slides.some((s) => s.img) && (
+              <>
+                <Label>{imgMode === "paid" ? "Приклад готових картинок Nano Banana" : "Безкоштовний перегляд"}</Label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  {result.slides.filter((s) => s.img).map((s, i) => (
+                    <ImageTile key={i} src={s.realImg || imgUrl(s.img, i + 1)} prompt={s.img} idx={i + 1} />
+                  ))}
+                </div>
+                {imgMode === "paid" ? (
+                  <p style={{ fontSize: 13, color: SHELL.ink, margin: "-2px 0 16px", lineHeight: 1.5 }}>
+                    Готові картинки Nano Banana (модель <b>{nb.label}</b>). Собівартість каруселі: {result.slides.filter((s) => s.img).length} × €{nb.price.toFixed(2)} ={" "}
+                    <b style={{ color: SHELL.gold }}>€{(result.slides.filter((s) => s.img).length * nb.price).toFixed(2)}</b>.
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 12, color: SHELL.sub, margin: "-2px 0 16px" }}>
+                    Це безкоштовний перегляд. Промпти для точної генерації — у блоці нижче.
+                  </p>
+                )}
+              </>
+            )}
+
+            {result.hooks?.length > 1 && (
+              <>
+                <Label>Варіанти обкладинки</Label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                  {result.hooks.map((h, i) => (
+                    <button key={i} onClick={() => swapHook(h)}
+                      style={{ textAlign: "left", background: SHELL.panel, border: `1px solid ${SHELL.line}`, borderRadius: 12, padding: "11px 13px", color: SHELL.ink, fontSize: 14, cursor: "pointer" }}>{h}</button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {result.caption && (
+              <Card title="Підпис до посту" onCopy={() => copy(result.caption, "cap")} copied={copied === "cap"}>{result.caption}</Card>
+            )}
+            {result.hashtags?.length > 0 && (
+              <Card title="Хештеги" onCopy={() => copy(result.hashtags.join(" "), "tags")} copied={copied === "tags"}>{result.hashtags.join("  ")}</Card>
+            )}
+            {imgMode === "prompts" && imgPrompts && (
+              <Card title="Промпти для самостійної генерації (AI Studio)" onCopy={() => copy(imgPrompts, "img")} copied={copied === "img"}>
+                <span style={{ whiteSpace: "pre-line", color: SHELL.sub, fontSize: 13 }}>{imgPrompts}</span>
+              </Card>
+            )}
+
+            <button onClick={() => copy(allText, "all")}
+              style={{ width: "100%", marginTop: 6, background: "transparent", color: SHELL.gold, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: "13px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+              {copied === "all" ? "Скопійовано ✓" : "Копіювати весь текст"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ДРІБНІ КОМПОНЕНТИ                                                   */
+/* ------------------------------------------------------------------ */
+
+function Label({ children }) {
+  return <p style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: SHELL.sub, margin: "16px 0 8px" }}>{children}</p>;
+}
+function Row({ children }) {
+  return <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>{children}</div>;
+}
+function Chip({ children, active, onClick }) {
+  return (
+    <button onClick={onClick}
+      style={{ padding: "8px 13px", borderRadius: 20, fontSize: 13, cursor: "pointer",
+        background: active ? SHELL.gold : SHELL.panel, color: active ? "#141210" : SHELL.ink,
+        border: `1px solid ${active ? SHELL.gold : SHELL.line}`, fontWeight: active ? 600 : 400 }}>{children}</button>
+  );
+}
+function Input({ value, onChange, placeholder, textarea }) {
+  const props = {
+    value, onChange: (e) => onChange(e.target.value), placeholder,
+    style: { width: "100%", background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "13px 14px", fontSize: 14, resize: "none", lineHeight: 1.5 },
+  };
+  return textarea ? <textarea rows={3} {...props} /> : <input {...props} />;
+}
+function Select({ value, onChange, options }) {
+  return (
+    <div style={{ position: "relative", marginBottom: 4 }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%", appearance: "none", background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "13px 40px 13px 14px", fontSize: 14 }}>
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+      <span style={{ position: "absolute", right: 16, top: 14, color: SHELL.sub, pointerEvents: "none" }}>▾</span>
+    </div>
+  );
+}
+function ToggleRow({ on, onToggle, title, sub, color }) {
+  return (
+    <button onClick={onToggle}
+      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: SHELL.panel, border: `1px solid ${on ? color : SHELL.line}`, borderRadius: 14,
+        padding: "13px 14px", color: SHELL.ink, cursor: "pointer", margin: "10px 0 0" }}>
+      <span style={{ textAlign: "left" }}>
+        <span style={{ fontWeight: 600, fontSize: 14 }}>{title}</span>
+        <span style={{ display: "block", fontSize: 12, color: SHELL.sub }}>{sub}</span>
+      </span>
+      <span style={{ width: 44, height: 26, borderRadius: 20, background: on ? color : SHELL.line, position: "relative", transition: ".2s", flex: "0 0 auto" }}>
+        <span style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 20, height: 20, borderRadius: 20, background: "#fff", transition: ".2s" }} />
+      </span>
+    </button>
+  );
+}
+function ThemeCard({ th, active, onClick, fontCss }) {
+  return (
+    <button onClick={onClick} title={th.name}
+      style={{ flex: "0 0 auto", width: 92, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
+      <div style={{
+        width: 92, height: 116, borderRadius: 12, background: th.bg, overflow: "hidden",
+        border: `2px solid ${active ? SHELL.gold : "transparent"}`, boxShadow: "0 6px 18px rgba(0,0,0,.4)",
+        padding: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "left",
+      }}>
+        <span style={{ width: 16, height: 2, background: th.accent, borderRadius: 2 }} />
+        <span style={{ fontFamily: fontCss || th.font, color: th.ink, fontSize: 13, lineHeight: 1.1, fontWeight: 600 }}>
+          Твій<br />текст
+        </span>
+        <span style={{ fontSize: 16, color: th.accent, lineHeight: 1 }}>→</span>
+      </div>
+      <span style={{ display: "block", fontSize: 11, color: active ? SHELL.gold : SHELL.sub, marginTop: 5, textAlign: "center" }}>{th.name}</span>
+    </button>
+  );
+}
+
+function FontCard({ label, css, active, onClick }) {
+  return (
+    <button onClick={onClick} title={label}
+      style={{ flex: "0 0 auto", width: 78, cursor: "pointer", background: "none", border: "none", padding: 0 }}>
+      <div style={{
+        width: 78, height: 78, borderRadius: 12, background: SHELL.panel,
+        border: `2px solid ${active ? SHELL.gold : SHELL.line}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <span style={{ fontFamily: css, color: SHELL.ink, fontSize: 30, lineHeight: 1 }}>Аа</span>
+      </div>
+      <span style={{ display: "block", fontSize: 10, color: active ? SHELL.gold : SHELL.sub, marginTop: 5, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+    </button>
+  );
+}
+
+function ImgModeBtn({ active, onClick, title, sub, badge, badgeColor }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+        background: active ? "#17150F" : SHELL.panel,
+        border: `1.5px solid ${active ? SHELL.gold : SHELL.line}`, borderRadius: 14,
+        padding: "12px 14px", color: SHELL.ink, cursor: "pointer", textAlign: "left",
+        boxShadow: active ? `inset 3px 0 0 ${SHELL.gold}` : "none",
+      }}>
+      <span>
+        <span style={{ fontWeight: active ? 700 : 600, fontSize: 14 }}>{title}</span>
+        <span style={{ display: "block", fontSize: 12, color: SHELL.sub, marginTop: 2 }}>{sub}</span>
+      </span>
+      <span style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
+        {badge && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#141210", background: badgeColor, borderRadius: 10, padding: "3px 8px", whiteSpace: "nowrap" }}>{badge}</span>
+        )}
+        <span style={{ width: 22, height: 22, borderRadius: 7, border: `2px solid ${active ? SHELL.gold : SHELL.line}`, background: active ? SHELL.gold : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#141210", fontSize: 14, fontWeight: 800 }}>
+          {active ? "✓" : ""}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function ImageTile({ src, prompt, idx }) {
+  const [state, setState] = useState("load"); // load | ok | err
+  return (
+    <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 12, overflow: "hidden", background: SHELL.panel, border: `1px solid ${SHELL.line}` }}>
+      {state !== "err" ? (
+        <a href={src} target="_blank" rel="noreferrer" style={{ display: "block", width: "100%", height: "100%" }}>
+          <img src={src} alt={"Слайд " + idx} loading="lazy"
+            onLoad={() => setState("ok")} onError={() => setState("err")}
+            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: state === "ok" ? 1 : 0, transition: "opacity .4s" }} />
+        </a>
+      ) : (
+        <div style={{ padding: 12, fontSize: 11, color: SHELL.sub, lineHeight: 1.4 }}>
+          Картинку не вдалось показати тут. Промпт: {prompt}
+        </div>
+      )}
+      {state === "load" && (
+        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: SHELL.sub, fontSize: 12 }}>
+          малюю…
+        </span>
+      )}
+      <span style={{ position: "absolute", top: 6, left: 8, fontSize: 11, color: "#fff", background: "rgba(0,0,0,.5)", padding: "2px 7px", borderRadius: 10 }}>{idx}</span>
+    </div>
+  );
+}
+
+function Card({ title, children, onCopy, copied }) {
+  return (
+    <div style={{ background: SHELL.panel, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: SHELL.sub }}>{title}</span>
+        <button onClick={onCopy} style={{ background: "none", border: "none", color: copied ? SHELL.gold : SHELL.sub, fontSize: 13, cursor: "pointer" }}>{copied ? "✓" : "копіювати"}</button>
+      </div>
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: SHELL.ink }}>{children}</p>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
