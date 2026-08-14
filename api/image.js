@@ -2,7 +2,7 @@
 const MODELS = {
   lite: "gemini-2.5-flash-lite-image",   // Nano Banana 2 Lite
   nb2: "gemini-2.5-flash-image-preview", // Nano Banana 2
-  pro: "gemini-3-pro-image-preview",     // Nano Banana Pro
+  pro: "gemini-2,5-pro-image-preview",     // Nano Banana Pro
 };
 
 export default async function handler(req, res) {
