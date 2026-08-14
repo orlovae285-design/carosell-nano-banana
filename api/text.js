@@ -5,7 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 
-const MODEL = "gemini-3.6-flash"; // актуальна текстова модель Gemini
+const MODEL = "gemini-2.5-flash"; // актуальна текстова модель Gemini
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
