@@ -1,12 +1,4 @@
-// api/text.js — Vercel serverless function (Node)
-// Генерує текст каруселі через Gemini (той самий ключ, що й для картинок).
-
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
-
-const MODEL = "gemini-2.5-flash"; // актуальна текстова модель Gemini
-
+// api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -15,18 +7,29 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   try {
-    const { prompt, secret, search } = req.body || {};
+    const { prompt, secret } = req.body || {};
     if (!secret || secret !== process.env.STUDIO_SECRET) {
       return res.status(401).json({ error: "unauthorized" });
     }
     if (!prompt) return res.status(400).json({ error: "no prompt" });
 
-    const config = search ? { tools: [{ googleSearch: {} }] } : {};
-    const result = await ai.models.generateContent({ model: MODEL, contents: prompt, config });
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
+      process.env.GEMINI_KEY;
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    });
+
+    const data = await r.json();
+    if (!r.ok) {
+      return res.status(500).json({ error: data?.error?.message || "gemini error" });
+    }
 
     const text =
-      result.text ||
-      (result?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+      (data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
 
     res.status(200).json({ text });
   } catch (e) {
