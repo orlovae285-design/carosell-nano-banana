@@ -1,7 +1,7 @@
 // api/image.js — Vercel serverless function (Node), без зовнішніх пакетів
 const MODELS = {
-  lite: "gemini-3.1-flash-lite-image",   // Nano Banana 2 Lite
-  nb2: "gemini-3.1-flash-image-preview", // Nano Banana 2
+  lite: "gemini-2.5-flash-lite-image",   // Nano Banana 2 Lite
+  nb2: "gemini-2.5-flash-image-preview", // Nano Banana 2
   pro: "gemini-3-pro-image-preview",     // Nano Banana Pro
 };
 
