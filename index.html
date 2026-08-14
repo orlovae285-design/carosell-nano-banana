@@ -26,6 +26,7 @@ const NICHES = [
 ];
 
 const FORMATS = [
+  { id: "funnel", label: "Воронка продажів → до продукту" },
   { id: "hpsr", label: "Гачок → Біль → Рішення → Результат" },
   { id: "list", label: "Список порад / фішок" },
   { id: "story", label: "Особиста історія" },
@@ -112,11 +113,19 @@ const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD"
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
 /* ------------------------------------------------------------------ */
 
-function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang }) {
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, gender, offer }) {
   const fmt = FORMATS.find((f) => f.id === format)?.label || format;
   const st = STYLES.find((s) => s.id === style);
   const vol = VOLUMES.find((v) => v.id === volume);
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
+  const genderLine =
+    gender === "m" ? "Розповідь від першої особи ЧОЛОВІЧОГО роду (я зробив, я готовий, я впевнений). Витримуй чоловічий рід усюди."
+    : gender === "n" ? "Уникай форм роду в оповіді від першої особи (перефразовуй так, щоб не було видно статі)."
+    : "Розповідь від першої особи ЖІНОЧОГО роду (я зробила, я готова, я впевнена). Витримуй жіночий рід усюди.";
+  const offerLine = (offer && offer.trim())
+    ? `\nЦе ВОРОНКА ПРОДАЖІВ. Мета каруселі — м'яко підвести читача до пропозиції: "${offer.trim()}".
+Структура: гачок → біль/проблема → підсилення болю → рішення (натяк на твою пропозицію) → доказ/результат → чіткий заклик до дії у пропозицію. Не тисни агресивно — веди природно. Останній слайд = конкретний CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
+    : "";
   const volLine =
     volume === "min" ? "Мінімум тексту: тільки сильний заголовок. body лишай порожнім або до 4 слів."
     : volume === "max" ? "Більше тексту: заголовок + 2-3 короткі речення в body. Без води."
@@ -131,10 +140,12 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
 Стиль тексту: ${st?.label} (${st?.note})
 Обсяг тексту на слайд: ${vol?.label} — ${volLine}
 Кількість слайдів: ${count}
-${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}
+${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}${offerLine}
 
 ЯК ПИСАТИ (критично):
-- Українською, живою мовою, як реальна людина. Витримуй обраний стиль тексту.
+- Пиши ВИКЛЮЧНО чистою українською мовою. ЖОДНОЇ російської літери (ы, э, ъ, ё) чи русизмів. Тільки літературна українська.
+- ${genderLine}
+- Живою мовою, як реальна людина. Витримуй обраний стиль тексту.
 - Перший слайд — гачок, що зупиняє палець за секунду.
 - Кожен слайд лишає бажання гортати далі.
 - Речення різної довжини. Коротко. Потім довше.
@@ -201,10 +212,13 @@ async function generateText(opts) {
 }
 
 // Крок 2: окремо — короткі промпти картинок під наявні слайди
-async function generateImages({ slides, themeMood, lang }) {
+async function generateImages({ slides, themeMood, lang, topic }) {
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
   const titles = slides.map((s, i) => `${i + 1}. ${s.title}`).join("\n");
-  const prompt = `Return ONLY a JSON array of ${slides.length} short image prompts in ${langName}, one per slide below.
+  const prompt = `Return ONLY a JSON array of ${slides.length} short image prompts, one per slide below.
+ALL prompts MUST be written strictly in ${langName} language only — no other language.
+The carousel topic is: "${topic}". Each image must clearly relate to the MEANING of its slide and the topic — use symbolic objects, relevant scenes or environments, concrete visual metaphors.
+Do NOT insert random people, random women or random faces unless the slide is explicitly about a specific person.
 Each prompt: under 20 words, premium cinematic aesthetic (${themeMood}), elegant lighting, clean background with empty space for text overlay.
 Vary the shot across slides (close-up, wide, side angle) but keep ONE consistent style.
 ABSOLUTELY NO text, no letters, no words, no captions, no watermark in the image.
@@ -271,14 +285,14 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <>
           <img src={imgSrc} alt="" loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.8) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.32) 0%, rgba(0,0,0,.42) 40%, rgba(0,0,0,.85) 100%)" }} />
         </>
       )}
 
       <div style={{ position: "relative", height: "100%", padding: "8% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "4%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(115% 85% at 50% 55%, rgba(0,0,0,.62) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
           <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 9cqw, 30px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 600, textShadow: shadow, overflowWrap: "anywhere" }}>
             {data.title}
           </p>
@@ -315,6 +329,8 @@ function App() {
   const [customNiche, setCustomNiche] = useState("");
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("hpsr");
+  const [gender, setGender] = useState("f");
+  const [offer, setOffer] = useState("");
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
   const [count, setCount] = useState(6);
@@ -345,12 +361,12 @@ function App() {
     if (!activeNiche) return setError("Обери або впиши напрямок.");
     setError(""); setLoading(true); setResult(null);
     try {
-      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang };
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, gender, offer };
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
       if (imagesOn) {
         try {
-          const imgs = await generateImages({ slides: r.slides, themeMood: theme.mood, lang: promptLang });
+          const imgs = await generateImages({ slides: r.slides, themeMood: theme.mood, lang: promptLang, topic: topic.trim() });
           r.slides = r.slides.map((s, i) => ({ ...s, img: imgs[i] || "" }));
           if (imgMode === "paid") {
             for (let i = 0; i < r.slides.length; i++) {
@@ -469,6 +485,21 @@ function App() {
 
         <Label>Формат</Label>
         <Select value={format} onChange={setFormat} options={FORMATS.map((f) => [f.id, f.label])} />
+
+        <Label>Від кого пишемо</Label>
+        <Row>
+          <Chip active={gender === "f"} onClick={() => setGender("f")}>Жіночий рід</Chip>
+          <Chip active={gender === "m"} onClick={() => setGender("m")}>Чоловічий рід</Chip>
+          <Chip active={gender === "n"} onClick={() => setGender("n")}>Нейтрально</Chip>
+        </Row>
+
+        {format === "funnel" && (
+          <>
+            <Label>Твоя пропозиція (куди ведемо)</Label>
+            <Input value={offer} onChange={setOffer} textarea
+              placeholder="Напр.: курс «Грошовий код», консультація, практикум із трансформації…" />
+          </>
+        )}
 
         <Label>Стиль тексту</Label>
         <Row>
