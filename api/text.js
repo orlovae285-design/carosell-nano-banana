@@ -1,7 +1,39 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
+// Текст каруселі через Gemini з автоповтором при ліміті швидкості + піднятим лімітом відповіді.
 const MODEL = "gemini-3.7-flash"; // можна змінити на "gemini-3.6-flash"
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+
+const MAX_RETRIES = 3;
+const MAX_OUTPUT_TOKENS = 8192; // щоб велика карусель (9-20 слайдів) не обрізалась
+
+async function callGeminiText(key, prompt) {
+  let last = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const r = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+      }),
+    });
+
+    if (r.ok) return { ok: true, data: await r.json() };
+
+    const errText = await r.text();
+    last = { status: r.status, text: errText };
+
+    // 429 = забагато запитів, 503/500 = сервіс перевантажений → зачекати й повторити
+    if (r.status === 429 || r.status === 503 || r.status === 500) {
+      const waitMs = Math.round(600 * Math.pow(2, attempt) + Math.random() * 900);
+      await new Promise((res) => setTimeout(res, waitMs));
+      continue;
+    }
+    return { ok: false, status: r.status, text: errText };
+  }
+  return { ok: false, status: last?.status || 429, text: last?.text || "rate limited after retries" };
+}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -27,23 +59,22 @@ export default async function handler(req, res) {
     }
     if (!prompt) return res.status(400).json({ error: "no prompt" });
 
-    const r = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    });
-
-    const data = await r.json();
-    if (!r.ok) {
-      console.error("Gemini error:", JSON.stringify(data));
-      return res.status(500).json({ error: data?.error?.message || "gemini error" });
+    const out = await callGeminiText(key, prompt);
+    if (!out.ok) {
+      console.error("Gemini error:", out.status, out.text);
+      const status = out.status === 429 ? 429 : 500;
+      return res.status(status).json({ error: safeMsg(out.text) || "gemini error" });
     }
 
     const text =
-      (data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+      (out.data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
     res.status(200).json({ text });
   } catch (e) {
     console.error("Handler crash:", e);
     res.status(500).json({ error: String(e?.message || e) });
   }
+}
+
+function safeMsg(text) {
+  try { return JSON.parse(text)?.error?.message; } catch { return null; }
 }
