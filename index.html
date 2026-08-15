@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>Carousel Studio</title>
+<title>Карусель, що продає</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
@@ -100,6 +100,58 @@ const LANGS = [
   { id: "de", label: "Deutsch" },
 ];
 
+// Мова ТЕКСТУ каруселі
+const TEXT_LANGS = [
+  { id: "uk", label: "Українська" },
+  { id: "ru", label: "Русский" },
+  { id: "en", label: "English" },
+  { id: "de", label: "Deutsch" },
+];
+
+// Інструкції для моделі по кожній мові тексту (заголовки, body, підпис, хештеги)
+const WRITE_RULES = {
+  uk: {
+    role: "український контент-креатор",
+    lname: "УКРАЇНСЬКА",
+    purity: "Пиши ВИКЛЮЧНО чистою літературною українською мовою. ЖОДНОЇ російської літери (ы, э, ъ, ё) чи русизмів.",
+    gender: {
+      f: "Розповідь від першої особи ЖІНОЧОГО роду (я зробила, я готова, я впевнена). Витримуй жіночий рід усюди.",
+      m: "Розповідь від першої особи ЧОЛОВІЧОГО роду (я зробив, я готовий, я впевнений). Витримуй чоловічий рід усюди.",
+      n: "Уникай форм роду в оповіді від першої особи (перефразовуй так, щоб не було видно статі).",
+    },
+  },
+  ru: {
+    role: "русскоязычный контент-креатор",
+    lname: "РУССКИЙ",
+    purity: "Пиши ИСКЛЮЧИТЕЛЬНО на чистом, грамотном русском языке. Без украинизмов и без английских вставок.",
+    gender: {
+      f: "Повествование от первого лица ЖЕНСКОГО рода (я сделала, я готова, я уверена). Выдерживай женский род везде.",
+      m: "Повествование от первого лица МУЖСКОГО рода (я сделал, я готов, я уверен). Выдерживай мужской род везде.",
+      n: "Избегай родовых форм от первого лица (перефразируй так, чтобы пол не был виден).",
+    },
+  },
+  en: {
+    role: "content creator who writes viral Instagram carousels",
+    lname: "ENGLISH",
+    purity: "Write ALL output text strictly in natural, native English. No other language, no mixed-in words.",
+    gender: {
+      f: "First-person voice of a woman. Keep a natural feminine tone where relevant.",
+      m: "First-person voice of a man. Keep a natural masculine tone where relevant.",
+      n: "Keep the first-person voice gender-neutral.",
+    },
+  },
+  de: {
+    role: "Content-Creator, der virale Instagram-Karussells schreibt",
+    lname: "DEUTSCH",
+    purity: "Schreibe den GESAMTEN Text ausschließlich in natürlichem, muttersprachlichem Deutsch. Keine andere Sprache.",
+    gender: {
+      f: "Ich-Perspektive einer Frau. Wo die Sprache es zulässt, weibliche Formen verwenden.",
+      m: "Ich-Perspektive eines Mannes. Wo die Sprache es zulässt, männliche Formen verwenden.",
+      n: "Halte die Ich-Perspektive geschlechtsneutral.",
+    },
+  },
+};
+
 // Моделі Nano Banana та ціна за 1 зображення (€, орієнтовно)
 const NB_MODELS = [
   { id: "lite", label: "Nano Banana 2 Lite", price: 0.02, model: "gemini-3.1-flash-lite-image" },
@@ -113,15 +165,13 @@ const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD"
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
 /* ------------------------------------------------------------------ */
 
-function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, gender, offer }) {
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer }) {
   const fmt = FORMATS.find((f) => f.id === format)?.label || format;
   const st = STYLES.find((s) => s.id === style);
   const vol = VOLUMES.find((v) => v.id === volume);
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
-  const genderLine =
-    gender === "m" ? "Розповідь від першої особи ЧОЛОВІЧОГО роду (я зробив, я готовий, я впевнений). Витримуй чоловічий рід усюди."
-    : gender === "n" ? "Уникай форм роду в оповіді від першої особи (перефразовуй так, щоб не було видно статі)."
-    : "Розповідь від першої особи ЖІНОЧОГО роду (я зробила, я готова, я впевнена). Витримуй жіночий рід усюди.";
+  const wr = WRITE_RULES[textLang] || WRITE_RULES.uk;
+  const genderLine = (wr.gender && wr.gender[gender]) || wr.gender.f;
   const offerLine = (offer && offer.trim())
     ? `\nЦе ВОРОНКА ПРОДАЖІВ. Мета каруселі — м'яко підвести читача до пропозиції: "${offer.trim()}".
 Структура: гачок → біль/проблема → підсилення болю → рішення (натяк на твою пропозицію) → доказ/результат → чіткий заклик до дії у пропозицію. Не тисни агресивно — веди природно. Останній слайд = конкретний CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
@@ -131,7 +181,9 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
     : volume === "max" ? "Більше тексту: заголовок + 2-3 короткі речення в body. Без води."
     : "Середньо: заголовок + одне коротке речення в body.";
 
-  return `Ти — український контент-креатор, який пише вірусні каруселі для Instagram. Ти НЕ штучний інтелект — ти жива людина з голосом і думкою.
+  return `Ти — ${wr.role}. Ти пишеш вірусні каруселі для Instagram. Ти НЕ штучний інтелект — ти жива людина з голосом і думкою.
+
+МОВА ВІДПОВІДІ (критично): весь текст у відповіді — заголовки, body слайдів, caption, hashtags, cta — СУВОРО мовою ${wr.lname}. ${wr.purity}
 
 ЗАВДАННЯ: зроби карусель.
 Напрямок: ${niche}
@@ -143,7 +195,7 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
 ${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}${offerLine}
 
 ЯК ПИСАТИ (критично):
-- Пиши ВИКЛЮЧНО чистою українською мовою. ЖОДНОЇ російської літери (ы, э, ъ, ё) чи русизмів. Тільки літературна українська.
+- ${wr.purity}
 - ${genderLine}
 - Живою мовою, як реальна людина. Витримуй обраний стиль тексту.
 - Перший слайд — гачок, що зупиняє палець за секунду.
@@ -162,7 +214,7 @@ ${trends ? "Спершу знайди в інтернеті свіжі кути 
  "cta":"заклик одним рядком"
 }
 ${images ? `Для кожного слайда додай "img": короткий (до 22 слів) промпт МОВОЮ ${langName} для генерації преміальної картинки у стилі: ${themeMood}. Єдина естетика на всю карусель, кінематографічне світло, елегантно, місце під текст.` : ""}
-slides має містити рівно ${count} елементів. Перший — обкладинка (title = найсильніший гачок). Тримай усе стисло, щоб відповідь вмістилася повністю.`;
+slides має містити рівно ${count} елементів. Перший — обкладинка (title = найсильніший гачок). Тримай усе стисло, щоб відповідь вмістилася повністю. Пам'ятай: увесь видимий текст — мовою ${wr.lname}.`;
 }
 
 // Стійкий розбір JSON: спершу нормально, потім рятуємо слайди з обрізаної відповіді
@@ -330,6 +382,7 @@ function App() {
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("hpsr");
   const [gender, setGender] = useState("f");
+  const [textLang, setTextLang] = useState("uk");
   const [offer, setOffer] = useState("");
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
@@ -361,7 +414,7 @@ function App() {
     if (!activeNiche) return setError("Обери або впиши напрямок.");
     setError(""); setLoading(true); setResult(null);
     try {
-      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, gender, offer };
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer };
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
       if (imagesOn) {
@@ -461,16 +514,37 @@ function App() {
 
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "22px 18px 60px" }}>
         <header style={{ marginBottom: 22 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 8, background: SHELL.gold }} />
-            <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: SHELL.sub }}>Carousel Studio</span>
+          <div style={{
+            position: "relative",
+            borderRadius: 18,
+            padding: "22px 20px 20px",
+            background: "linear-gradient(150deg, #16120B 0%, #0F0F13 55%, #0B0B0D 100%)",
+            border: "1px solid rgba(198,161,91,.30)",
+            boxShadow: "0 18px 50px rgba(0,0,0,.45)",
+            overflow: "hidden",
+          }}>
+            <span style={{ position: "absolute", top: -45, right: -35, width: 175, height: 175, borderRadius: "50%", background: "radial-gradient(circle, rgba(198,161,91,.20), rgba(198,161,91,0) 70%)", pointerEvents: "none" }} />
+
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ width: 7, height: 7, borderRadius: 8, background: SHELL.gold }} />
+              <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: "#DCC9A0", fontWeight: 600 }}>Carousel Studio</span>
+            </div>
+
+            <h1 style={{ position: "relative", fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 30, lineHeight: 1.06, margin: "0 0 12px", color: "#F4EDDF" }}>
+              Карусель,<br />що продає
+            </h1>
+
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, margin: "0 0 10px" }}>
+              <span style={{ width: 28, height: 1, background: "linear-gradient(90deg, rgba(198,161,91,.95), rgba(198,161,91,0))", flex: "0 0 auto" }} />
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, letterSpacing: .3, color: SHELL.gold }}>
+                глибина + естетика
+              </span>
+            </div>
+
+            <p style={{ position: "relative", color: "#C9C2B4", fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+              Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
+            </p>
           </div>
-          <h1 style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 26, lineHeight: 1.1, margin: "10px 0 6px" }}>
-            Віральні каруселі,<br />що пише людина
-          </h1>
-          <p style={{ color: SHELL.sub, fontSize: 14, margin: 0 }}>
-            Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
-          </p>
         </header>
 
         <Label>Напрямок</Label>
@@ -491,6 +565,13 @@ function App() {
           <Chip active={gender === "f"} onClick={() => setGender("f")}>Жіночий рід</Chip>
           <Chip active={gender === "m"} onClick={() => setGender("m")}>Чоловічий рід</Chip>
           <Chip active={gender === "n"} onClick={() => setGender("n")}>Нейтрально</Chip>
+        </Row>
+
+        <Label>Мова тексту</Label>
+        <Row>
+          {TEXT_LANGS.map((l) => (
+            <Chip key={l.id} active={textLang === l.id} onClick={() => setTextLang(l.id)}>{l.label}</Chip>
+          ))}
         </Row>
 
         {format === "funnel" && (
