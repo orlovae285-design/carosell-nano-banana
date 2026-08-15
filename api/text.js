@@ -1,42 +1,16 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-const MODEL = "gemini-3.7-flash"; // ← актуальна модель (можна змінити на "gemini-3.6-flash")
+const MODEL = "gemini-3.7-flash"; // можна змінити на "gemini-3.6-flash"
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   const key = (process.env.GEMINI_KEY || "").trim();
-
-  // ── ДІАГНОСТИКА (можна прибрати згодом) ──
-  if (req.method === "GET" && req.query && req.query.debug) {
-    return res.status(200).json({
-      hasGeminiKey: !!key,
-      geminiKeyLength: key.length,
-      geminiKeyStartsWith: key.slice(0, 4),
-      hasStudioSecret: !!process.env.STUDIO_SECRET,
-      nodeVersion: process.version,
-      model: MODEL,
-    });
-  }
-  if (req.method === "GET" && req.query && req.query.ping) {
-    try {
-      const r = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({ contents: [{ parts: [{ text: "Say hi in one word" }] }] }),
-      });
-      const raw = await r.text();
-      return res.status(200).json({ httpStatus: r.status, ok: r.ok, model: MODEL, gemini: raw.slice(0, 900) });
-    } catch (e) {
-      return res.status(200).json({ fetchThrew: String(e && e.message || e) });
-    }
-  }
-
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   try {
     if (!key) return res.status(500).json({ error: "GEMINI_KEY is missing" });
