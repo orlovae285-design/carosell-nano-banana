@@ -52,7 +52,7 @@ const OFFER_FUNNEL = {
   consult: "Ти продаєш ІНДИВІДУАЛЬНУ КОНСУЛЬТАЦІЮ/СЕСІЮ 1-на-1. Веди: гачок → конкретний біль → чому загальні поради не спрацьовують саме тут → цінність персонального підходу → м'який доказ довіри → CTA записатися (пиши в директ / за посиланням).",
   guide: "Це ЛІД-МАГНІТ — безкоштовний МІНІ-ГАЙД або чек-лист для збору бази. Веди: гачок → біль → пообіцяй швидке конкретне рішення в гайді → перелічи 2-3 пункти цінності всередині → CTA забрати безкоштовний гайд (кодове слово в коментар / за посиланням).",
   service: "Ти продаєш ПОСЛУГУ/СУПРОВІД (робиш ЗА клієнта). Веди: гачок → біль і ціна бездіяльності → чому робити самотужки довго й дорого → як твоя послуга знімає це з плечей → результат/кейс → CTA залишити заявку.",
-  custom: "Це ВОРОНКА ПРОДАЖІВ. Веди: гачок → біль/проблема → підсилення болю → рішення (натяк на пропозицію) → доказ/результат → чіткий заклик до дії у пропозицію.",
+  custom: "Це ВОРОНКА ПРОДАЖІВ для товару або послуги, які вкаже автор. Веди природно: гачок → бажання/біль клієнта → чому саме цей товар/послуга це закриває → цінність, деталі, емоція від володіння → доказ якості чи відгук → чіткий CTA (замовити, написати в директ, деталі за посиланням). Пиши доречно саме до вказаного продукту.",
 };
 
 // Найпопулярніші стилі тексту
@@ -64,6 +64,12 @@ const STYLES = [
   { id: "story", label: "Сторітелінг", note: "як історія з життя" },
   { id: "motiv", label: "Мотиваційний", note: "надихає й підіймає" },
   { id: "humor", label: "З гумором", note: "легко, з іронією" },
+  { id: "tender", label: "Ніжний", note: "м'яко, дбайливо, з теплом" },
+  { id: "confident", label: "Впевнений", note: "спокійна сила, без сумнівів" },
+  { id: "poetic", label: "Поетичний", note: "образно, з метафорами, краса слова" },
+  { id: "honest", label: "Відвертий", note: "чесно і вразливо, від душі" },
+  { id: "luxury", label: "Преміум", note: "стримано, елегантно, відчуття дорогого" },
+  { id: "mystic", label: "Містичний", note: "загадково, езотерично, глибинно" },
 ];
 
 const VOLUMES = [
@@ -110,6 +116,20 @@ const FONTS = [
   { id: "yeseva", label: "Yeseva One", css: "'Yeseva One', serif" },
   { id: "raleway", label: "Raleway", css: "'Raleway', sans-serif" },
   { id: "lora", label: "Lora", css: "'Lora', serif" },
+  { id: "ptserif", label: "PT Serif", css: "'PT Serif', serif" },
+  { id: "merriweather", label: "Merriweather", css: "'Merriweather', serif" },
+  { id: "spectral", label: "Spectral", css: "'Spectral', serif" },
+  { id: "philosopher", label: "Philosopher", css: "'Philosopher', sans-serif" },
+  { id: "elmessiri", label: "El Messiri", css: "'El Messiri', sans-serif" },
+  { id: "marck", label: "Marck (від руки)", css: "'Marck Script', cursive" },
+  { id: "pacifico", label: "Pacifico", css: "'Pacifico', cursive" },
+  { id: "quicksand", label: "Modern (IG)", css: "'Quicksand', sans-serif" },
+  { id: "jetmono", label: "Typewriter (IG)", css: "'JetBrains Mono', monospace" },
+  { id: "russo", label: "Strong (IG)", css: "'Russo One', sans-serif" },
+  { id: "ptnarrow", label: "Squeeze (IG)", css: "'PT Sans Narrow', sans-serif" },
+  { id: "badscript", label: "Signature (IG)", css: "'Bad Script', cursive" },
+  { id: "pangolin", label: "Casual (IG)", css: "'Pangolin', cursive" },
+  { id: "ruslan", label: "Deco (IG)", css: "'Ruslan Display', serif" },
 ];
 
 // Мова промптів для картинок
@@ -179,6 +199,15 @@ const NB_MODELS = [
 ];
 
 const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD", sub: "#8E8A80", gold: "#C6A15B", live: "#FF5D57" };
+
+// ▼▼ ОПЛАТА: встав своє посилання АБО реквізити. Код доступу видаєш людині ПІСЛЯ оплати. ▼▼
+// Сам код доступу зберігається на сервері: Vercel → Settings → Environment Variables → STUDIO_ACCESS_CODE
+const PAY_INFO = {
+  price: "10€ / місяць",
+  link: "",          // напр. "https://send.monobank.ua/..." — встав своє посилання на оплату (лишиш порожнім — кнопки не буде)
+  requisites: "",    // або картка/IBAN, напр. "4441 1111 2222 3333 (Олена)" (лишиш порожнім — не покажеться)
+  note: "Після оплати напишіть у директ @olena.ai_creator — надішлю код доступу.",
+};
 
 /* ------------------------------------------------------------------ */
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
@@ -314,11 +343,11 @@ Answer with just: ["prompt 1","prompt 2",...] and nothing else.`;
 const NB_ENDPOINT = "/api/image";
 const NB_SECRET = "Olena!2026-studio";
 
-async function callNanoBanana(prompt, model) {
+async function callNanoBanana(prompt, model, code) {
   const res = await fetch(NB_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, model, secret: NB_SECRET }),
+    body: JSON.stringify({ prompt, model, secret: NB_SECRET, code }),
   });
   if (!res.ok) throw new Error("nb " + res.status);
   const data = await res.json();
@@ -409,6 +438,7 @@ function App() {
   const [trends, setTrends] = useState(false);
   const [imgMode, setImgMode] = useState("off"); // off | prompts | paid
   const [nbModel, setNbModel] = useState("lite");
+  const [accessCode, setAccessCode] = useState("");
   const [promptLang, setPromptLang] = useState("en");
   const [themeId, setThemeId] = useState("noir");
   const [fontId, setFontId] = useState("auto");
@@ -441,13 +471,17 @@ function App() {
           const imgs = await generateImages({ slides: r.slides, themeMood: theme.mood, lang: promptLang, topic: topic.trim() });
           r.slides = r.slides.map((s, i) => ({ ...s, img: imgs[i] || "" }));
           if (imgMode === "paid") {
-            for (let i = 0; i < r.slides.length; i++) {
-              setGenStatus(`Малюю картинку ${i + 1}/${r.slides.length}…`);
-              try {
-                r.slides[i].realImg = await callNanoBanana(r.slides[i].img, nbModel);
-              } catch (e) { r.slides[i].realImg = ""; }
+            if (!accessCode.trim()) {
+              setGenStatus("Введи код доступу для платної генерації — показую безкоштовний перегляд.");
+            } else {
+              for (let i = 0; i < r.slides.length; i++) {
+                setGenStatus(`Малюю картинку ${i + 1}/${r.slides.length}…`);
+                try {
+                  r.slides[i].realImg = await callNanoBanana(r.slides[i].img, nbModel, accessCode);
+                } catch (e) { r.slides[i].realImg = ""; }
+              }
+              setGenStatus("");
             }
-            setGenStatus("");
           }
         } catch (e) { /* картинки не критичні — показуємо текст */ }
       }
@@ -524,14 +558,17 @@ function App() {
   return (
     <div style={{ minHeight: "100vh", background: SHELL.bg, color: SHELL.ink, fontFamily: "'Manrope',sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;700;900&family=Spectral:wght@400;500;600;700&family=Philosopher:wght@400;700&family=El+Messiri:wght@400;500;600;700&family=Marck+Script&family=Pacifico&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Russo+One&family=Bad+Script&family=PT+Sans+Narrow:wght@400;700&family=Pangolin&family=Ruslan+Display&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         input,button,textarea,select{font-family:inherit;}
         button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SHELL.gold};outline-offset:2px;}
         .rail::-webkit-scrollbar{display:none;}
+        .wrap{max-width:480px;margin:0 auto;padding:22px 18px 60px;}
+        @media (min-width:900px){ .wrap{max-width:760px;padding:34px 26px 70px;} }
+        @media (min-width:1200px){ .wrap{max-width:920px;} }
       `}</style>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "22px 18px 60px" }}>
+      <div className="wrap">
         <header style={{ marginBottom: 22 }}>
           <div style={{
             position: "relative",
@@ -544,9 +581,23 @@ function App() {
           }}>
             <span style={{ position: "absolute", top: -45, right: -35, width: 175, height: 175, borderRadius: "50%", background: "radial-gradient(circle, rgba(198,161,91,.20), rgba(198,161,91,0) 70%)", pointerEvents: "none" }} />
 
-            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ width: 7, height: 7, borderRadius: 8, background: SHELL.gold }} />
-              <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: "#DCC9A0", fontWeight: 600 }}>Carousel Studio</span>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: 8, background: SHELL.gold }} />
+                <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: "#DCC9A0", fontWeight: 600 }}>Carousel Studio</span>
+              </span>
+              <span style={{ display: "flex", gap: 4, flex: "0 0 auto" }}>
+                {TEXT_LANGS.map((l) => (
+                  <button key={l.id} onClick={() => setTextLang(l.id)} title="Мова тексту каруселі"
+                    style={{ padding: "4px 8px", borderRadius: 14, fontSize: 11, letterSpacing: .3, cursor: "pointer", lineHeight: 1,
+                      background: textLang === l.id ? SHELL.gold : "rgba(255,255,255,.05)",
+                      color: textLang === l.id ? "#141210" : "#C9B892",
+                      border: `1px solid ${textLang === l.id ? SHELL.gold : "rgba(198,161,91,.30)"}`,
+                      fontWeight: textLang === l.id ? 700 : 500 }}>
+                    {({ uk: "УКР", ru: "РУС", en: "ENG", de: "DE" })[l.id]}
+                  </button>
+                ))}
+              </span>
             </div>
 
             <h1 style={{ position: "relative", fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 30, lineHeight: 1.06, margin: "0 0 12px", color: "#F4EDDF" }}>
@@ -563,20 +614,6 @@ function App() {
             <p style={{ position: "relative", color: "#C9C2B4", fontSize: 14, lineHeight: 1.5, margin: 0 }}>
               Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
             </p>
-
-            <div style={{ position: "relative", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, marginTop: 16 }}>
-              <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#9C927C", marginRight: 2 }}>Мова</span>
-              {TEXT_LANGS.map((l) => (
-                <button key={l.id} onClick={() => setTextLang(l.id)}
-                  style={{ padding: "6px 11px", borderRadius: 20, fontSize: 12, cursor: "pointer",
-                    background: textLang === l.id ? SHELL.gold : "rgba(255,255,255,.04)",
-                    color: textLang === l.id ? "#141210" : "#DCC9A0",
-                    border: `1px solid ${textLang === l.id ? SHELL.gold : "rgba(198,161,91,.35)"}`,
-                    fontWeight: textLang === l.id ? 700 : 500 }}>
-                  {({ uk: "УКР", ru: "РУС", en: "ENG", de: "DE" })[l.id]}
-                </button>
-              ))}
-            </div>
           </div>
         </header>
 
@@ -615,9 +652,16 @@ function App() {
                 <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{o.label}</Chip>
               ))}
             </Row>
-            <Label>Назва / деталі пропозиції</Label>
+            <Label>{offerType === "custom" ? "Впиши, що саме продаєш" : "Назва / деталі пропозиції"}</Label>
             <Input value={offer} onChange={setOffer} textarea
-              placeholder="Напр.: курс «Грошовий код», практикум із трансформації, консультація 1-на-1…" />
+              placeholder={offerType === "custom"
+                ? "Напр.: букети квітів, керамічний посуд ручної роботи, прикраси, одяг, мед…"
+                : "Напр.: курс «Грошовий код», практикум із трансформації, консультація 1-на-1…"} />
+            {offerType === "custom" && (
+              <p style={{ fontSize: 12, color: SHELL.sub, margin: "6px 0 0", lineHeight: 1.5 }}>
+                Опиши свій товар чи послугу — карусель побудує воронку продажів саме під нього.
+              </p>
+            )}
           </>
         )}
 
@@ -677,6 +721,28 @@ function App() {
             <p style={{ fontSize: 12, color: SHELL.sub, margin: "8px 0 0", lineHeight: 1.5 }}>
               Ліміт витрат: Google Cloud → Billing → Budgets &amp; alerts → бюджет напр. €10/міс.
             </p>
+
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${SHELL.line}` }}>
+              <p style={{ fontSize: 13, color: SHELL.ink, margin: "0 0 6px", fontWeight: 700 }}>🔒 Доступ до платної генерації</p>
+              <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 10px", lineHeight: 1.5 }}>
+                Вартість: <b style={{ color: SHELL.ink }}>{PAY_INFO.price}</b>. {PAY_INFO.note}
+              </p>
+              {PAY_INFO.link ? (
+                <a href={PAY_INFO.link} target="_blank" rel="noreferrer"
+                  style={{ display: "inline-block", background: SHELL.gold, color: "#141210", textDecoration: "none", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: 13, marginBottom: 10 }}>
+                  Сплатити →
+                </a>
+              ) : null}
+              {PAY_INFO.requisites ? (
+                <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 10px", lineHeight: 1.5 }}>
+                  Реквізити: <span style={{ color: SHELL.ink }}>{PAY_INFO.requisites}</span>
+                </p>
+              ) : null}
+              <Input value={accessCode} onChange={setAccessCode} placeholder="Введи код доступу після оплати" />
+              <p style={{ fontSize: 11, color: SHELL.sub, margin: "6px 0 0", lineHeight: 1.5 }}>
+                Без коду картинки Nano Banana не генеруються — показується безкоштовний перегляд.
+              </p>
+            </div>
           </div>
         )}
 
