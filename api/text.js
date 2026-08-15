@@ -1,5 +1,5 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.7-flash"; // ← актуальна модель (можна змінити на "gemini-3.6-flash")
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
@@ -11,8 +11,7 @@ export default async function handler(req, res) {
 
   const key = (process.env.GEMINI_KEY || "").trim();
 
-  // ── ДІАГНОСТИКА 1: чи бачить функція ключ ──
-  // Відкрий:  https://ТВІЙ-ДОМЕН/api/text?debug=1
+  // ── ДІАГНОСТИКА (можна прибрати згодом) ──
   if (req.method === "GET" && req.query && req.query.debug) {
     return res.status(200).json({
       hasGeminiKey: !!key,
@@ -20,12 +19,9 @@ export default async function handler(req, res) {
       geminiKeyStartsWith: key.slice(0, 4),
       hasStudioSecret: !!process.env.STUDIO_SECRET,
       nodeVersion: process.version,
+      model: MODEL,
     });
   }
-
-  // ── ДІАГНОСТИКА 2: реальний тестовий виклик до Gemini ──
-  // Відкрий:  https://ТВІЙ-ДОМЕН/api/text?ping=1
-  // Покаже точну відповідь Google (статус + текст помилки або відповідь).
   if (req.method === "GET" && req.query && req.query.ping) {
     try {
       const r = await fetch(ENDPOINT, {
@@ -34,7 +30,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({ contents: [{ parts: [{ text: "Say hi in one word" }] }] }),
       });
       const raw = await r.text();
-      return res.status(200).json({ httpStatus: r.status, ok: r.ok, gemini: raw.slice(0, 900) });
+      return res.status(200).json({ httpStatus: r.status, ok: r.ok, model: MODEL, gemini: raw.slice(0, 900) });
     } catch (e) {
       return res.status(200).json({ fetchThrew: String(e && e.message || e) });
     }
@@ -57,7 +53,6 @@ export default async function handler(req, res) {
     }
     if (!prompt) return res.status(400).json({ error: "no prompt" });
 
-    // Ключ передаємо через ЗАГОЛОВОК (надійніше для нових AQ. ключів)
     const r = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
