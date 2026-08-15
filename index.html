@@ -36,6 +36,25 @@ const FORMATS = [
   { id: "before", label: "До / Після" },
 ];
 
+// Що саме продаємо у воронці (кожен тип = своя структура воронки)
+const OFFER_TYPES = [
+  { id: "course", label: "Курс" },
+  { id: "practicum", label: "Практикум" },
+  { id: "consult", label: "Консультація" },
+  { id: "guide", label: "Міні-гайд" },
+  { id: "service", label: "Послуга" },
+  { id: "custom", label: "Своє" },
+];
+
+const OFFER_FUNNEL = {
+  course: "Ти продаєш НАВЧАЛЬНИЙ КУРС. Веди: гачок → біль/нерозв'язана проблема → чому спроби самотужки не працюють → покажи трансформацію, яку дає курс → доказ/результат учнів → CTA на запис або деталі курсу.",
+  practicum: "Ти продаєш ПРАКТИКУМ/ІНТЕНСИВ (практика, а не суха теорія). Веди: гачок → знайома болюча ситуація → чому теорія без практики нічого не змінює → що конкретно людина ЗРОБИТЬ і відчує на практикумі → результат → CTA на участь.",
+  consult: "Ти продаєш ІНДИВІДУАЛЬНУ КОНСУЛЬТАЦІЮ/СЕСІЮ 1-на-1. Веди: гачок → конкретний біль → чому загальні поради не спрацьовують саме тут → цінність персонального підходу → м'який доказ довіри → CTA записатися (пиши в директ / за посиланням).",
+  guide: "Це ЛІД-МАГНІТ — безкоштовний МІНІ-ГАЙД або чек-лист для збору бази. Веди: гачок → біль → пообіцяй швидке конкретне рішення в гайді → перелічи 2-3 пункти цінності всередині → CTA забрати безкоштовний гайд (кодове слово в коментар / за посиланням).",
+  service: "Ти продаєш ПОСЛУГУ/СУПРОВІД (робиш ЗА клієнта). Веди: гачок → біль і ціна бездіяльності → чому робити самотужки довго й дорого → як твоя послуга знімає це з плечей → результат/кейс → CTA залишити заявку.",
+  custom: "Це ВОРОНКА ПРОДАЖІВ. Веди: гачок → біль/проблема → підсилення болю → рішення (натяк на пропозицію) → доказ/результат → чіткий заклик до дії у пропозицію.",
+};
+
 // Найпопулярніші стилі тексту
 const STYLES = [
   { id: "emotional", label: "Емоційний", note: "тепло, чуттєво, від серця" },
@@ -165,16 +184,15 @@ const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD"
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
 /* ------------------------------------------------------------------ */
 
-function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer }) {
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer, offerType }) {
   const fmt = FORMATS.find((f) => f.id === format)?.label || format;
   const st = STYLES.find((s) => s.id === style);
   const vol = VOLUMES.find((v) => v.id === volume);
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
   const wr = WRITE_RULES[textLang] || WRITE_RULES.uk;
   const genderLine = (wr.gender && wr.gender[gender]) || wr.gender.f;
-  const offerLine = (offer && offer.trim())
-    ? `\nЦе ВОРОНКА ПРОДАЖІВ. Мета каруселі — м'яко підвести читача до пропозиції: "${offer.trim()}".
-Структура: гачок → біль/проблема → підсилення болю → рішення (натяк на твою пропозицію) → доказ/результат → чіткий заклик до дії у пропозицію. Не тисни агресивно — веди природно. Останній слайд = конкретний CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
+  const offerLine = (format === "funnel")
+    ? `\n${OFFER_FUNNEL[offerType] || OFFER_FUNNEL.custom}${(offer && offer.trim()) ? `\nКонкретна пропозиція/назва, до якої ведемо: "${offer.trim()}".` : ""}\nНе тисни агресивно — веди природно. Останній слайд = чіткий CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
     : "";
   const volLine =
     volume === "min" ? "Мінімум тексту: тільки сильний заголовок. body лишай порожнім або до 4 слів."
@@ -384,6 +402,7 @@ function App() {
   const [gender, setGender] = useState("f");
   const [textLang, setTextLang] = useState("uk");
   const [offer, setOffer] = useState("");
+  const [offerType, setOfferType] = useState("course");
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
   const [count, setCount] = useState(6);
@@ -414,7 +433,7 @@ function App() {
     if (!activeNiche) return setError("Обери або впиши напрямок.");
     setError(""); setLoading(true); setResult(null);
     try {
-      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer };
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType };
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
       if (imagesOn) {
@@ -544,6 +563,20 @@ function App() {
             <p style={{ position: "relative", color: "#C9C2B4", fontSize: 14, lineHeight: 1.5, margin: 0 }}>
               Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
             </p>
+
+            <div style={{ position: "relative", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, marginTop: 16 }}>
+              <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#9C927C", marginRight: 2 }}>Мова</span>
+              {TEXT_LANGS.map((l) => (
+                <button key={l.id} onClick={() => setTextLang(l.id)}
+                  style={{ padding: "6px 11px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+                    background: textLang === l.id ? SHELL.gold : "rgba(255,255,255,.04)",
+                    color: textLang === l.id ? "#141210" : "#DCC9A0",
+                    border: `1px solid ${textLang === l.id ? SHELL.gold : "rgba(198,161,91,.35)"}`,
+                    fontWeight: textLang === l.id ? 700 : 500 }}>
+                  {({ uk: "УКР", ru: "РУС", en: "ENG", de: "DE" })[l.id]}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
@@ -576,9 +609,15 @@ function App() {
 
         {format === "funnel" && (
           <>
-            <Label>Твоя пропозиція (куди ведемо)</Label>
+            <Label>Що продаємо</Label>
+            <Row>
+              {OFFER_TYPES.map((o) => (
+                <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{o.label}</Chip>
+              ))}
+            </Row>
+            <Label>Назва / деталі пропозиції</Label>
             <Input value={offer} onChange={setOffer} textarea
-              placeholder="Напр.: курс «Грошовий код», консультація, практикум із трансформації…" />
+              placeholder="Напр.: курс «Грошовий код», практикум із трансформації, консультація 1-на-1…" />
           </>
         )}
 
