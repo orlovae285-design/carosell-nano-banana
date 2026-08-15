@@ -1,11 +1,12 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-// Текст каруселі через Gemini з автоповтором при ліміті швидкості + піднятим лімітом відповіді.
+// Текст каруселі через Gemini: автоповтор при 429 + низький рівень "мислення",
+// щоб роздуми не з'їдали бюджет відповіді (інакше промпти картинок виходять порожні).
 const MODEL = "gemini-3.7-flash"; // можна змінити на "gemini-3.6-flash"
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
 const MAX_RETRIES = 3;
-const MAX_OUTPUT_TOKENS = 8192; // щоб велика карусель (9-20 слайдів) не обрізалась
+const MAX_OUTPUT_TOKENS = 8192;
 
 async function callGeminiText(key, prompt) {
   let last = null;
@@ -15,7 +16,10 @@ async function callGeminiText(key, prompt) {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+        generationConfig: {
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          thinkingConfig: { thinkingLevel: "low" }, // менше роздумів → більше місця під відповідь
+        },
       }),
     });
 
@@ -24,7 +28,6 @@ async function callGeminiText(key, prompt) {
     const errText = await r.text();
     last = { status: r.status, text: errText };
 
-    // 429 = забагато запитів, 503/500 = сервіс перевантажений → зачекати й повторити
     if (r.status === 429 || r.status === 503 || r.status === 500) {
       const waitMs = Math.round(600 * Math.pow(2, attempt) + Math.random() * 900);
       await new Promise((res) => setTimeout(res, waitMs));
