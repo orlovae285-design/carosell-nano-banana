@@ -463,14 +463,14 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <>
           <img src={imgSrc} alt="" loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.40) 0%, rgba(0,0,0,.50) 42%, rgba(0,0,0,.90) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.30) 45%, rgba(0,0,0,.78) 100%)" }} />
         </>
       )}
 
       <div style={{ position: "relative", height: "100%", padding: "8% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "4%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(125% 95% at 50% 55%, rgba(0,0,0,.80) 0%, rgba(0,0,0,.50) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
           <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(17px, 10cqw, 34px)" : "clamp(15px, 8.2cqw, 27px)", lineHeight: 1.12, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "anywhere" }}>
             {data.title}
           </p>
@@ -655,6 +655,28 @@ function App() {
       a.href = url; a.download = "carousel.zip";
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(uiLang === "en" ? "Couldn't save images. Try again." : "Не вдалося зберегти картинки. Спробуй ще раз.");
+    } finally { setDownloading(false); }
+  }
+
+  async function downloadSeparate() {
+    if (!result) return;
+    setDownloading(true);
+    try {
+      const html2canvas = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "html2canvas");
+      for (let i = 0; i < slideRefs.current.length; i++) {
+        const node = slideRefs.current[i];
+        if (!node) continue;
+        const canvas = await html2canvas(node, { scale: 3, useCORS: true, backgroundColor: null });
+        const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `slide-${String(i + 1).padStart(2, "0")}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        await new Promise((r) => setTimeout(r, 300));
+      }
     } catch (e) {
       setError(uiLang === "en" ? "Couldn't save images. Try again." : "Не вдалося зберегти картинки. Спробуй ще раз.");
     } finally { setDownloading(false); }
@@ -981,10 +1003,16 @@ function App() {
               </div>
             )}
 
-            <button onClick={downloadSlides} disabled={downloading}
-              style={{ width: "100%", marginTop: 10, marginBottom: 4, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: "13px", fontWeight: 600, fontSize: 14, cursor: downloading ? "wait" : "pointer", opacity: downloading ? .7 : 1 }}>
-              {downloading ? (uiLang === "en" ? "Packing images…" : "Пакую картинки…") : (uiLang === "en" ? "⬇ Download all slides (ZIP)" : "⬇ Завантажити всі слайди (ZIP)")}
-            </button>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 4 }}>
+              <button onClick={downloadSlides} disabled={downloading}
+                style={{ flex: 1, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: "13px 10px", fontWeight: 600, fontSize: 13, cursor: downloading ? "wait" : "pointer", opacity: downloading ? .7 : 1 }}>
+                {downloading ? (uiLang === "en" ? "Packing…" : "Пакую…") : (uiLang === "en" ? "⬇ All (ZIP)" : "⬇ Усі (ZIP)")}
+              </button>
+              <button onClick={downloadSeparate} disabled={downloading}
+                style={{ flex: 1, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "13px 10px", fontWeight: 600, fontSize: 13, cursor: downloading ? "wait" : "pointer", opacity: downloading ? .7 : 1 }}>
+                {downloading ? (uiLang === "en" ? "Saving…" : "Зберігаю…") : (uiLang === "en" ? "⬇ One by one" : "⬇ По одній")}
+              </button>
+            </div>
 
             <button onClick={saveDraft}
               style={{ width: "100%", marginBottom: 8, background: "transparent", color: SHELL.sub, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "11px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
