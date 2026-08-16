@@ -471,11 +471,11 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
         <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(125% 95% at 50% 55%, rgba(0,0,0,.80) 0%, rgba(0,0,0,.50) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
-          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 9cqw, 30px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 600, textShadow: shadow, overflowWrap: "anywhere" }}>
+          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(17px, 10cqw, 34px)" : "clamp(15px, 8.2cqw, 27px)", lineHeight: 1.12, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "anywhere" }}>
             {data.title}
           </p>
           {data.body ? (
-            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "4%", marginBottom: 0, fontSize: "clamp(10px, 4.3cqw, 15px)", lineHeight: 1.45, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
+            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "4%", marginBottom: 0, fontSize: "clamp(11px, 4.9cqw, 17px)", lineHeight: 1.42, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
               {data.body}
             </p>
           ) : null}
@@ -584,7 +584,7 @@ function App() {
     const d = {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
-      when: new Date().toLocaleDateString(),
+      when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, style, volume, count, imgMode, promptLang, themeId, fontId },
       result: slim,
     };
@@ -839,8 +839,13 @@ function App() {
                 <DemoSlide key={i} bg={d.bg} orb={d.orb} img={imgUrl(d.p, 100 + i)} title={d.t} />
               ))}
             </div>
-            <p style={{ fontSize: 11, color: SHELL.sub, margin: "-4px 0 12px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: 11, color: SHELL.sub, margin: "-4px 0 4px", lineHeight: 1.5 }}>
               {uiLang === "en" ? "Real Nano Banana photos are even richer — generated per slide." : "Справжні фото Nano Banana ще багатші — генеруються під кожен слайд."}
+            </p>
+            <p style={{ fontSize: 11, color: SHELL.gold, margin: "0 0 12px", lineHeight: 1.5 }}>
+              {uiLang === "en"
+                ? "💡 Text looks small in these tiny previews — on the finished 1080px slide it's large and clearly readable."
+                : "💡 У маленькому прев'ю текст здається дрібним — на готовому слайді (1080px) він великий і чітко читається."}
             </p>
             <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 6px" }}>Модель (твоя собівартість за 1 зображення):</p>
             <Row>
@@ -936,15 +941,20 @@ function App() {
 
         {result && (
           <div style={{ marginTop: 26 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <span style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: SHELL.sub }}>
-                {result.slides.length} слайдів
+                {result.slides.length} {uiLang === "en" ? "slides" : "слайдів"}
               </span>
               <div style={{ display: "flex", gap: 6 }}>
-                <Chip active={viewMode === "grid"} onClick={() => setViewMode("grid")}>Сітка</Chip>
-                <Chip active={viewMode === "rail"} onClick={() => setViewMode("rail")}>Стрічка</Chip>
+                <Chip active={viewMode === "grid"} onClick={() => setViewMode("grid")}>{uiLang === "en" ? "Grid" : "Сітка"}</Chip>
+                <Chip active={viewMode === "rail"} onClick={() => setViewMode("rail")}>{uiLang === "en" ? "Strip" : "Стрічка"}</Chip>
               </div>
             </div>
+            <p style={{ fontSize: 11, color: SHELL.sub, margin: "0 0 12px", lineHeight: 1.5 }}>
+              {uiLang === "en"
+                ? "💡 Previews look small here — the downloaded slide (1080px) has large, readable text."
+                : "💡 Прев'ю тут маленькі — на завантаженому слайді (1080px) текст великий і читабельний."}
+            </p>
 
             {viewMode === "grid" ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12, marginBottom: 8 }}>
@@ -1154,16 +1164,16 @@ function ImgModeBtn({ active, onClick, title, sub, badge, badgeColor }) {
 function DemoSlide({ bg, orb, img, title }) {
   const [ok, setOk] = useState(true);
   return (
-    <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: bg, border: `1px solid ${SHELL.line}` }}>
-      <span style={{ position: "absolute", top: "16%", left: "50%", transform: "translateX(-50%)", width: "58%", aspectRatio: "1", borderRadius: "50%", background: orb }} />
+    <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: bg, border: `1px solid ${SHELL.line}`, containerType: "inline-size" }}>
+      <span style={{ position: "absolute", top: "12%", left: "50%", transform: "translateX(-50%)", width: "54%", aspectRatio: "1", borderRadius: "50%", background: orb }} />
       {ok && img && (
         <img src={img} alt="" loading="lazy" onError={() => setOk(false)}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
-      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,.85) 100%)" }} />
-      <span style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
-        <span style={{ display: "block", width: 14, height: 2, background: SHELL.gold, borderRadius: 2, marginBottom: 5 }} />
-        <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 2px 8px rgba(0,0,0,.9)" }}>{title}</span>
+      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.90) 100%)" }} />
+      <span style={{ position: "absolute", left: "7%", right: "7%", bottom: "7%" }}>
+        <span style={{ display: "block", width: "20%", height: "3cqw", maxHeight: 4, background: SHELL.gold, borderRadius: 2, marginBottom: "5%" }} />
+        <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: "clamp(13px, 12cqw, 26px)", fontWeight: 700, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,.95)" }}>{title}</span>
       </span>
     </div>
   );
