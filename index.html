@@ -799,21 +799,16 @@ function App() {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
               {[
-                { p: "dark luxury still life, single golden droplet on cracked black glass, cinematic gold light, near-black background", t: uiLang === "en" ? "Your energy — your power" : "Твоя енергія — твоя сила" },
-                { p: "elegant golden origami crane on dark marble, moody cinematic lighting, near-black, luxury", t: uiLang === "en" ? "Allow yourself more" : "Дозволь собі більше" },
-                { p: "golden lotus flower on black volcanic rock, glowing warm light, dark luxury, cinematic", t: uiLang === "en" ? "Calm is your strength" : "Спокій — це сила" },
-              ].map((ex, i) => (
-                <div key={i} style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: "#0B0B0D", border: `1px solid ${SHELL.line}` }}>
-                  <img src={imgUrl(ex.p, 100 + i)} alt="" loading="lazy"
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                  <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.12) 40%, rgba(0,0,0,.82) 100%)" }} />
-                  <span style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
-                    <span style={{ display: "block", width: 14, height: 2, background: SHELL.gold, borderRadius: 2, marginBottom: 5 }} />
-                    <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>{ex.t}</span>
-                  </span>
-                </div>
+                { bg: "radial-gradient(120% 100% at 50% 32%, #3a2c12 0%, #14110b 55%, #0a0a0c 100%)", orb: "radial-gradient(circle, rgba(232,192,112,.95), rgba(198,161,91,.18) 58%, rgba(0,0,0,0) 72%)", p: "single golden droplet on cracked black glass, dark luxury, cinematic gold light", t: uiLang === "en" ? "Your energy — your power" : "Твоя енергія — твоя сила" },
+                { bg: "radial-gradient(120% 100% at 50% 32%, #14243a 0%, #0c1420 55%, #080c14 100%)", orb: "radial-gradient(circle, rgba(212,177,95,.9), rgba(212,177,95,.15) 58%, rgba(0,0,0,0) 72%)", p: "golden origami crane on dark marble, moody cinematic lighting, luxury", t: uiLang === "en" ? "Allow yourself more" : "Дозволь собі більше" },
+                { bg: "radial-gradient(120% 100% at 50% 32%, #10281d 0%, #0a1a13 55%, #06100b 100%)", orb: "radial-gradient(circle, rgba(228,199,122,.9), rgba(228,199,122,.15) 58%, rgba(0,0,0,0) 72%)", p: "golden lotus flower on black volcanic rock, glowing warm light, dark luxury", t: uiLang === "en" ? "Calm is your strength" : "Спокій — це сила" },
+              ].map((d, i) => (
+                <DemoSlide key={i} bg={d.bg} orb={d.orb} img={imgUrl(d.p, 100 + i)} title={d.t} />
               ))}
             </div>
+            <p style={{ fontSize: 11, color: SHELL.sub, margin: "-4px 0 12px", lineHeight: 1.5 }}>
+              {uiLang === "en" ? "Real Nano Banana photos are even richer — generated per slide." : "Справжні фото Nano Banana ще багатші — генеруються під кожен слайд."}
+            </p>
             <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 6px" }}>Модель (твоя собівартість за 1 зображення):</p>
             <Row>
               {NB_MODELS.map((m) => (
@@ -1082,6 +1077,24 @@ function ImgModeBtn({ active, onClick, title, sub, badge, badgeColor }) {
         </span>
       </span>
     </button>
+  );
+}
+
+function DemoSlide({ bg, orb, img, title }) {
+  const [ok, setOk] = useState(true);
+  return (
+    <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: bg, border: `1px solid ${SHELL.line}` }}>
+      <span style={{ position: "absolute", top: "16%", left: "50%", transform: "translateX(-50%)", width: "58%", aspectRatio: "1", borderRadius: "50%", background: orb }} />
+      {ok && img && (
+        <img src={img} alt="" loading="lazy" onError={() => setOk(false)}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      )}
+      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.72) 100%)" }} />
+      <span style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
+        <span style={{ display: "block", width: 14, height: 2, background: SHELL.gold, borderRadius: 2, marginBottom: 5 }} />
+        <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>{title}</span>
+      </span>
+    </div>
   );
 }
 
