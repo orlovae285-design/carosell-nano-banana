@@ -445,8 +445,8 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
   const titleFont = fontCss || t.font;
   const hasImg = !!imgSrc;
   const ink = hasImg ? "#FFFFFF" : t.ink;
-  const sub = hasImg ? "rgba(255,255,255,.85)" : t.sub;
-  const shadow = hasImg ? "0 1px 12px rgba(0,0,0,.55)" : "none";
+  const sub = hasImg ? "rgba(255,255,255,.92)" : t.sub;
+  const shadow = hasImg ? "0 2px 14px rgba(0,0,0,.9)" : "none";
   const sizing = variant === "rail"
     ? { width: "min(72vw, 260px)", flex: "0 0 auto", scrollSnapAlign: "center" }
     : { width: "100%" };
@@ -463,14 +463,14 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <>
           <img src={imgSrc} alt="" loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.32) 0%, rgba(0,0,0,.42) 40%, rgba(0,0,0,.85) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.40) 0%, rgba(0,0,0,.50) 42%, rgba(0,0,0,.90) 100%)" }} />
         </>
       )}
 
       <div style={{ position: "relative", height: "100%", padding: "8% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "4%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(115% 85% at 50% 55%, rgba(0,0,0,.62) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(125% 95% at 50% 55%, rgba(0,0,0,.80) 0%, rgba(0,0,0,.50) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
           <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 9cqw, 30px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 600, textShadow: shadow, overflowWrap: "anywhere" }}>
             {data.title}
           </p>
@@ -1160,10 +1160,10 @@ function DemoSlide({ bg, orb, img, title }) {
         <img src={img} alt="" loading="lazy" onError={() => setOk(false)}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
-      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.72) 100%)" }} />
+      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,.85) 100%)" }} />
       <span style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
         <span style={{ display: "block", width: 14, height: 2, background: SHELL.gold, borderRadius: 2, marginBottom: 5 }} />
-        <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>{title}</span>
+        <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 2px 8px rgba(0,0,0,.9)" }}>{title}</span>
       </span>
     </div>
   );
