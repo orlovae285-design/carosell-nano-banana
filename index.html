@@ -529,6 +529,9 @@ function App() {
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState("");
+  const [drafts, setDrafts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("cs_drafts") || "[]"); } catch (e) { return []; }
+  });
 
   const railRef = useRef(null);
   const slideRefs = useRef([]);
@@ -543,26 +546,23 @@ function App() {
   async function run() {
     if (!topic.trim()) return setError("Впиши тему каруселі — про що вона.");
     if (!activeNiche) return setError("Обери або впиши напрямок.");
-    setError(""); setLoading(true); setResult(null);
+    setError(""); setGenStatus(""); setLoading(true); setResult(null);
     try {
       const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType };
+      setGenStatus(uiLang === "en" ? "Writing the text…" : "Пишу текст каруселі…");
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
       if (imagesOn) {
         try {
+          setGenStatus(uiLang === "en" ? "Preparing images…" : "Готую картинки…");
           const imgs = await generateImages({ slides: r.slides, themeMood: theme.mood, lang: promptLang, topic: topic.trim() });
           r.slides = r.slides.map((s, i) => ({ ...s, img: imgs[i] || "" }));
-          if (imgMode === "paid") {
-            if (!accessCode.trim()) {
-              setGenStatus("Введи код доступу для платної генерації — показую безкоштовний перегляд.");
-            } else {
-              for (let i = 0; i < r.slides.length; i++) {
-                setGenStatus(`Малюю картинку ${i + 1}/${r.slides.length}…`);
-                try {
-                  r.slides[i].realImg = await callNanoBanana(r.slides[i].img, nbModel, accessCode);
-                } catch (e) { r.slides[i].realImg = ""; }
-              }
-              setGenStatus("");
+          if (imgMode === "paid" && accessCode.trim()) {
+            for (let i = 0; i < r.slides.length; i++) {
+              setGenStatus((uiLang === "en" ? "Drawing image " : "Малюю картинку ") + (i + 1) + "/" + r.slides.length + "…");
+              try {
+                r.slides[i].realImg = await callNanoBanana(r.slides[i].img, nbModel, accessCode);
+              } catch (e) { r.slides[i].realImg = ""; }
             }
           }
         } catch (e) { /* картинки не критичні — показуємо текст */ }
@@ -570,8 +570,39 @@ function App() {
       slideRefs.current = [];
       setResult(r);
     } catch (e) {
-      setError("Не вдалося зібрати карусель. Спробуй ще раз або зменш кількість слайдів.");
-    } finally { setLoading(false); }
+      setError(uiLang === "en" ? "Couldn't build the carousel. Try again or reduce the number of slides." : "Не вдалося зібрати карусель. Спробуй ще раз або зменш кількість слайдів.");
+    } finally { setLoading(false); setGenStatus(""); }
+  }
+
+  function persistDrafts(next) {
+    setDrafts(next);
+    try { localStorage.setItem("cs_drafts", JSON.stringify(next)); } catch (e) {}
+  }
+  function saveDraft() {
+    if (!result) return;
+    const slim = { ...result, slides: result.slides.map((s) => ({ title: s.title, body: s.body, img: s.img })) };
+    const d = {
+      id: Date.now(),
+      title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
+      when: new Date().toLocaleDateString(),
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, style, volume, count, imgMode, promptLang, themeId, fontId },
+      result: slim,
+    };
+    persistDrafts([d, ...drafts].slice(0, 12));
+    setCopied("draft"); setTimeout(() => setCopied(""), 1400);
+  }
+  function loadDraft(d) {
+    const s = d.settings || {};
+    setNiche(s.niche ?? "Психологія"); setCustomNiche(s.customNiche ?? ""); setTopic(s.topic ?? "");
+    setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
+    setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setStyle(s.style ?? "emotional");
+    setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setImgMode(s.imgMode ?? "off");
+    setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setFontId(s.fontId ?? "auto");
+    slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function deleteDraft(id) {
+    persistDrafts(drafts.filter((x) => x.id !== id));
   }
 
   function surprise() {
@@ -594,36 +625,38 @@ function App() {
     setCopied(tag); setTimeout(() => setCopied(""), 1400);
   }
 
-  async function loadHtml2Canvas() {
-    if (window.html2canvas) return window.html2canvas;
+  async function loadScript(src, glob) {
+    if (window[glob]) return window[glob];
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-      s.onload = resolve; s.onerror = reject;
+      s.src = src; s.onload = resolve; s.onerror = reject;
       document.body.appendChild(s);
     });
-    return window.html2canvas;
+    return window[glob];
   }
 
   async function downloadSlides() {
     if (!result) return;
     setDownloading(true);
     try {
-      const html2canvas = await loadHtml2Canvas();
+      const html2canvas = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "html2canvas");
+      const JSZip = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", "JSZip");
+      const zip = new JSZip();
       for (let i = 0; i < slideRefs.current.length; i++) {
         const node = slideRefs.current[i];
         if (!node) continue;
         const canvas = await html2canvas(node, { scale: 3, useCORS: true, backgroundColor: null });
         const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = `slide-${i + 1}.png`;
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-        await new Promise((r) => setTimeout(r, 250)); // щоб браузер не блокував серію завантажень
+        zip.file(`slide-${String(i + 1).padStart(2, "0")}.png`, blob);
       }
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url; a.download = "carousel.zip";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
     } catch (e) {
-      setError("Не вдалося зберегти картинки. Спробуй ще раз.");
+      setError(uiLang === "en" ? "Couldn't save images. Try again." : "Не вдалося зберегти картинки. Спробуй ще раз.");
     } finally { setDownloading(false); }
   }
 
@@ -865,8 +898,41 @@ function App() {
             style={{ background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "0 16px", fontSize: 20, cursor: "pointer" }}>✦</button>
         </div>
 
+        <p style={{ color: SHELL.sub, fontSize: 12, marginTop: 10, lineHeight: 1.5 }}>
+          {uiLang === "en"
+            ? "⏱ Generation usually takes 1–3 min. With Nano Banana images — a bit longer."
+            : "⏱ Генерація зазвичай 1–3 хв. З картинками Nano Banana — трохи довше."}
+        </p>
+
+        {drafts.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: SHELL.sub, margin: "0 0 8px" }}>
+              {uiLang === "en" ? "Saved drafts" : "Збережені чернетки"}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {drafts.map((d) => (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, background: SHELL.panel, border: `1px solid ${SHELL.line}`, borderRadius: 12, padding: "9px 12px" }}>
+                  <button onClick={() => loadDraft(d)} style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", color: SHELL.ink, cursor: "pointer", padding: 0 }}>
+                    <span style={{ display: "block", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</span>
+                    <span style={{ fontSize: 11, color: SHELL.sub }}>{d.when}</span>
+                  </button>
+                  <button onClick={() => deleteDraft(d.id)} title={uiLang === "en" ? "Delete" : "Видалити"}
+                    style={{ background: "none", border: "none", color: SHELL.sub, fontSize: 16, cursor: "pointer", flex: "0 0 auto", padding: "0 4px" }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {error && <p style={{ color: SHELL.live, fontSize: 13, marginTop: 12 }}>{error}</p>}
-        {genStatus && <p style={{ color: SHELL.gold, fontSize: 13, marginTop: 12 }}>{genStatus}</p>}
+        {loading && genStatus && <p style={{ color: SHELL.gold, fontSize: 13, marginTop: 12 }}>{genStatus}</p>}
+        {imgMode === "paid" && !accessCode.trim() && result && (
+          <p style={{ color: SHELL.sub, fontSize: 12, marginTop: 12, lineHeight: 1.5 }}>
+            {uiLang === "en"
+              ? "Enter an access code for paid generation — showing a free preview."
+              : "Введи код доступу для платної генерації — показую безкоштовний перегляд."}
+          </p>
+        )}
 
         {result && (
           <div style={{ marginTop: 26 }}>
@@ -907,7 +973,12 @@ function App() {
 
             <button onClick={downloadSlides} disabled={downloading}
               style={{ width: "100%", marginTop: 10, marginBottom: 4, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: "13px", fontWeight: 600, fontSize: 14, cursor: downloading ? "wait" : "pointer", opacity: downloading ? .7 : 1 }}>
-              {downloading ? "Зберігаю картинки…" : "⬇ Завантажити слайди (PNG)"}
+              {downloading ? (uiLang === "en" ? "Packing images…" : "Пакую картинки…") : (uiLang === "en" ? "⬇ Download all slides (ZIP)" : "⬇ Завантажити всі слайди (ZIP)")}
+            </button>
+
+            <button onClick={saveDraft}
+              style={{ width: "100%", marginBottom: 8, background: "transparent", color: SHELL.sub, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "11px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              {copied === "draft" ? (uiLang === "en" ? "Saved ✓" : "Збережено ✓") : (uiLang === "en" ? "💾 Save as draft" : "💾 Зберегти чернетку")}
             </button>
 
             {imagesOn && result.slides.some((s) => s.img) && (
