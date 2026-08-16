@@ -249,6 +249,36 @@ const T = {
   },
 };
 
+// Англійські назви категорій (показуються, коли мова сайту = ENG; у генерацію не йдуть)
+const NICHE_EN = {
+  "Психологія": "Psychology", "Бізнес і коучинг": "Business & coaching",
+  "Трансформація / езотерика": "Transformation / esoterics", "Б'юті та естетика": "Beauty & aesthetics",
+  "Особистий бренд": "Personal brand", "Маркетинг і SMM": "Marketing & SMM",
+  "Фітнес і тіло": "Fitness & body", "Фінанси та гроші": "Finance & money",
+  "Стосунки": "Relationships", "Батьківство": "Parenting",
+  "Здоров'я і нейро": "Health & neuro", "Їжа та рецепти": "Food & recipes",
+};
+const FORMAT_EN = {
+  funnel: "Sales funnel → to the offer", hpsr: "Hook → Pain → Solution → Result",
+  list: "List of tips", story: "Personal story", myth: "Myths vs truth",
+  mistakes: "Common mistakes", guide: "Step-by-step mini-guide", before: "Before / After",
+};
+const STYLE_EN = {
+  emotional: "Emotional", expert: "Expert", bold: "Bold", friend: "Friendly",
+  story: "Storytelling", motiv: "Motivational", humor: "With humor",
+};
+const VOLUME_EN = { min: "Minimal", med: "Medium", max: "Large" };
+const OFFER_EN = {
+  course: "Course", practicum: "Workshop", consult: "Consultation",
+  guide: "Mini-guide", service: "Service", custom: "Custom",
+};
+const THEME_EN = {
+  noir: "Night & gold", royal: "Royal blue", emerald: "Emerald", editorial: "Cover",
+  magazine: "Magazine", gradient: "Gradient", coral: "Coral", pastel: "Pastel",
+  minimal: "Minimal", neon: "Neon", oldpaper: "Old paper", bordeaux: "Wine",
+  mocha: "Mocha", rose: "Rose", steel: "Steel", ocean: "Ocean",
+};
+
 // ▼▼ ОПЛАТА: встав своє посилання АБО реквізити. Код доступу видаєш людині ПІСЛЯ оплати. ▼▼
 // Сам код доступу зберігається на сервері: Vercel → Settings → Environment Variables → STUDIO_ACCESS_CODE
 const PAY_INFO = {
@@ -505,6 +535,7 @@ function App() {
   const [downloading, setDownloading] = useState(false);
   const theme = THEMES[themeId];
   const ui = T[uiLang] || T.uk;
+  const L = (map, key, fb) => (uiLang === "en" && map[key]) ? map[key] : fb;
   const activeNiche = niche === "custom" ? customNiche.trim() : niche;
   const imagesOn = imgMode !== "off";
   const nb = NB_MODELS.find((m) => m.id === nbModel) || NB_MODELS[0];
@@ -671,7 +702,7 @@ function App() {
 
         <Label>{ui.niche}</Label>
         <Row>
-          {NICHES.map((n) => <Chip key={n} active={niche === n} onClick={() => setNiche(n)}>{n}</Chip>)}
+          {NICHES.map((n) => <Chip key={n} active={niche === n} onClick={() => setNiche(n)}>{L(NICHE_EN, n, n)}</Chip>)}
           <Chip active={niche === "custom"} onClick={() => setNiche("custom")}>{ui.custom}</Chip>
         </Row>
         {niche === "custom" && <Input value={customNiche} onChange={setCustomNiche} placeholder={ui.customPh} />}
@@ -680,7 +711,7 @@ function App() {
         <Input value={topic} onChange={setTopic} textarea placeholder={ui.topicPh} />
 
         <Label>{ui.format}</Label>
-        <Select value={format} onChange={setFormat} options={FORMATS.map((f) => [f.id, f.label])} />
+        <Select value={format} onChange={setFormat} options={FORMATS.map((f) => [f.id, L(FORMAT_EN, f.id, f.label)])} />
 
         <Label>{ui.voice}</Label>
         <Row>
@@ -701,7 +732,7 @@ function App() {
             <Label>{ui.sell}</Label>
             <Row>
               {OFFER_TYPES.map((o) => (
-                <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{o.label}</Chip>
+                <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{L(OFFER_EN, o.id, o.label)}</Chip>
               ))}
             </Row>
             <Label>{offerType === "custom" ? "Впиши, що саме продаєш" : "Назва / деталі пропозиції"}</Label>
@@ -719,12 +750,12 @@ function App() {
 
         <Label>{ui.style}</Label>
         <Row>
-          {STYLES.map((s) => <Chip key={s.id} active={style === s.id} onClick={() => setStyle(s.id)}>{s.label}</Chip>)}
+          {STYLES.map((s) => <Chip key={s.id} active={style === s.id} onClick={() => setStyle(s.id)}>{L(STYLE_EN, s.id, s.label)}</Chip>)}
         </Row>
 
         <Label>{ui.volume}</Label>
         <Row>
-          {VOLUMES.map((v) => <Chip key={v.id} active={volume === v.id} onClick={() => setVolume(v.id)}>{v.label}</Chip>)}
+          {VOLUMES.map((v) => <Chip key={v.id} active={volume === v.id} onClick={() => setVolume(v.id)}>{L(VOLUME_EN, v.id, v.label)}</Chip>)}
         </Row>
 
         <Label>{ui.count}</Label>
@@ -764,18 +795,22 @@ function App() {
             </p>
 
             <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 8px" }}>
-              {uiLang === "en" ? "This is the image style you get:" : "Ось у якому стилі будуть картинки:"}
+              {uiLang === "en" ? "This is how your carousel will look:" : "Ось як виглядатиме твоя карусель:"}
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
               {[
-                "dark luxury still life, single golden droplet on cracked black glass, cinematic gold light, near-black background",
-                "elegant golden origami crane on dark marble, moody cinematic lighting, near-black, luxury",
-                "golden lotus flower on black volcanic rock, glowing warm light, dark luxury, cinematic",
-              ].map((p, i) => (
+                { p: "dark luxury still life, single golden droplet on cracked black glass, cinematic gold light, near-black background", t: uiLang === "en" ? "Your energy — your power" : "Твоя енергія — твоя сила" },
+                { p: "elegant golden origami crane on dark marble, moody cinematic lighting, near-black, luxury", t: uiLang === "en" ? "Allow yourself more" : "Дозволь собі більше" },
+                { p: "golden lotus flower on black volcanic rock, glowing warm light, dark luxury, cinematic", t: uiLang === "en" ? "Calm is your strength" : "Спокій — це сила" },
+              ].map((ex, i) => (
                 <div key={i} style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: "#0B0B0D", border: `1px solid ${SHELL.line}` }}>
-                  <img src={imgUrl(p, 100 + i)} alt="" loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.6) 100%)" }} />
+                  <img src={imgUrl(ex.p, 100 + i)} alt="" loading="lazy"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.12) 40%, rgba(0,0,0,.82) 100%)" }} />
+                  <span style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
+                    <span style={{ display: "block", width: 14, height: 2, background: SHELL.gold, borderRadius: 2, marginBottom: 5 }} />
+                    <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", color: "#fff", fontSize: 12, fontWeight: 600, lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>{ex.t}</span>
+                  </span>
                 </div>
               ))}
             </div>
@@ -818,13 +853,9 @@ function App() {
         <Label>{ui.carouselStyle}</Label>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <Select value={themeId} onChange={setThemeId} options={Object.entries(THEMES).map(([id, th]) => [id, th.name])} />
+            <Select value={themeId} onChange={setThemeId} options={Object.entries(THEMES).map(([id, th]) => [id, L(THEME_EN, id, th.name)])} />
           </div>
-          <span title={theme.name} style={{ width: 46, height: 46, borderRadius: 12, flex: "0 0 auto", background: theme.bg, border: `1px solid ${SHELL.line}`, boxShadow: "0 4px 12px rgba(0,0,0,.35)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 4, padding: "0 9px" }}>
-            <span style={{ width: 14, height: 3, borderRadius: 2, background: theme.accent }} />
-            <span style={{ width: 24, height: 4, borderRadius: 2, background: theme.ink }} />
-            <span style={{ width: 17, height: 2, borderRadius: 2, background: theme.sub }} />
-          </span>
+          <span title={theme.name} style={{ width: 46, height: 46, borderRadius: 12, flex: "0 0 auto", background: theme.bg, border: `1px solid ${SHELL.line}`, boxShadow: "0 4px 12px rgba(0,0,0,.35)" }} />
         </div>
 
         <Label>{ui.font}</Label>
