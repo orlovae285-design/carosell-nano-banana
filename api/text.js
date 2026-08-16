@@ -1,12 +1,12 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-// Текст каруселі через Gemini: автоповтор при 429 + низький рівень "мислення",
-// щоб роздуми не з'їдали бюджет відповіді (інакше промпти картинок виходять порожні).
+// Текст каруселі через Gemini: автоповтор при 429 + низький рівень "мислення" +
+// піднятий ліміт відповіді (щоб 15-20 слайдів не обрізались).
 const MODEL = "gemini-3.7-flash"; // можна змінити на "gemini-3.6-flash"
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
 const MAX_RETRIES = 3;
-const MAX_OUTPUT_TOKENS = 8192;
+const MAX_OUTPUT_TOKENS = 16384; // було 8192 — підняли, щоб велика карусель вмістилась
 
 async function callGeminiText(key, prompt) {
   let last = null;
@@ -18,7 +18,7 @@ async function callGeminiText(key, prompt) {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           maxOutputTokens: MAX_OUTPUT_TOKENS,
-          thinkingConfig: { thinkingLevel: "low" }, // менше роздумів → більше місця під відповідь
+          thinkingConfig: { thinkingLevel: "low" },
         },
       }),
     });
