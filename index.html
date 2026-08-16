@@ -130,6 +130,16 @@ const FONTS = [
   { id: "badscript", label: "Signature (IG)", css: "'Bad Script', cursive" },
   { id: "pangolin", label: "Casual (IG)", css: "'Pangolin', cursive" },
   { id: "ruslan", label: "Deco (IG)", css: "'Ruslan Display', serif" },
+  { id: "lobster", label: "Lobster (підпис-постер)", css: "'Lobster', cursive" },
+  { id: "forum", label: "Forum (антична)", css: "'Forum', serif" },
+  { id: "neucha", label: "Neucha (підпис)", css: "'Neucha', cursive" },
+  { id: "alumni", label: "Alumni Sans (постер)", css: "'Alumni Sans', sans-serif" },
+  { id: "kellyslab", label: "Kelly Slab (постер)", css: "'Kelly Slab', serif" },
+  { id: "rubikmono", label: "Rubik Mono (постер)", css: "'Rubik Mono One', sans-serif" },
+  { id: "literata", label: "Literata (література)", css: "'Literata', serif" },
+  { id: "oldstandard", label: "Old Standard (література)", css: "'Old Standard TT', serif" },
+  { id: "alice", label: "Alice (література)", css: "'Alice', serif" },
+  { id: "vollkorn", label: "Vollkorn (література)", css: "'Vollkorn', serif" },
 ];
 
 // Мова промптів для картинок
@@ -199,6 +209,45 @@ const NB_MODELS = [
 ];
 
 const SHELL = { bg: "#0C0C10", panel: "#141419", line: "#26262F", ink: "#ECE7DD", sub: "#8E8A80", gold: "#C6A15B", live: "#FF5D57" };
+
+// Мова САЙТУ (інтерфейсу): українська / англійська
+const SITE_LANGS = [{ id: "uk", label: "УКР" }, { id: "en", label: "ENG" }];
+const T = {
+  uk: {
+    h1a: "Карусель,", h1b: "що продає", signature: "глибина + естетика",
+    desc: "Напрямок, тема, стиль — і карусель, яку хочеться зберегти.",
+    siteLang: "мова сайту",
+    niche: "Напрямок", custom: "+ свій", customPh: "Напр.: нумерологія для бізнесу",
+    topic: "Тема каруселі", topicPh: "Про що карусель? Напр.: чому клієнти зникають після першої консультації",
+    format: "Формат",
+    voice: "Від кого пишемо", gF: "Жіночий рід", gM: "Чоловічий рід", gN: "Нейтрально",
+    textLangLabel: "Мова тексту каруселі",
+    style: "Стиль тексту", volume: "Обсяг тексту на слайд", count: "Кількість слайдів",
+    trendsT: "Світові тренди", trendsS: "Пошук свіжих кутів по темі в інтернеті",
+    images: "Картинки", imagesHint: "За замовчуванням картинок немає. Увімкни потрібне:",
+    promptsT: "Промпти для самостійної генерації", promptsS: "У будь-яких АІ-додатках — копіюй та роби сам/а", free: "безкоштовно",
+    autoT: "Автогенерація картинок", autoS: "Необмежені картинки прямо в додатку",
+    carouselStyle: "Стиль каруселі", font: "Шрифт", auto: "Авто", sell: "Що продаємо",
+    create: "Створити карусель", again: "Згенерувати ще", building: "Збираю…", surprise: "Здивуй мене",
+  },
+  en: {
+    h1a: "The carousel", h1b: "that sells", signature: "depth + aesthetics",
+    desc: "Niche, topic, style — and a carousel worth saving.",
+    siteLang: "site language",
+    niche: "Niche", custom: "+ custom", customPh: "e.g. numerology for business",
+    topic: "Carousel topic", topicPh: "What's it about? e.g. why clients vanish after the first session",
+    format: "Format",
+    voice: "Voice", gF: "Feminine", gM: "Masculine", gN: "Neutral",
+    textLangLabel: "Carousel text language",
+    style: "Text style", volume: "Text per slide", count: "Number of slides",
+    trendsT: "Global trends", trendsS: "Search fresh angles on your topic online",
+    images: "Images", imagesHint: "No images by default. Turn on what you need:",
+    promptsT: "Prompts to generate yourself", promptsS: "In any AI app — copy and do it yourself", free: "free",
+    autoT: "Auto image generation", autoS: "Unlimited images right in the app",
+    carouselStyle: "Carousel style", font: "Font", auto: "Auto", sell: "What you sell",
+    create: "Create carousel", again: "Generate again", building: "Building…", surprise: "Surprise me",
+  },
+};
 
 // ▼▼ ОПЛАТА: встав своє посилання АБО реквізити. Код доступу видаєш людині ПІСЛЯ оплати. ▼▼
 // Сам код доступу зберігається на сервері: Vercel → Settings → Environment Variables → STUDIO_ACCESS_CODE
@@ -429,6 +478,7 @@ function App() {
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("hpsr");
   const [gender, setGender] = useState("f");
+  const [uiLang, setUiLang] = useState("uk");
   const [textLang, setTextLang] = useState("uk");
   const [offer, setOffer] = useState("");
   const [offerType, setOfferType] = useState("course");
@@ -454,6 +504,7 @@ function App() {
   const slideRefs = useRef([]);
   const [downloading, setDownloading] = useState(false);
   const theme = THEMES[themeId];
+  const ui = T[uiLang] || T.uk;
   const activeNiche = niche === "custom" ? customNiche.trim() : niche;
   const imagesOn = imgMode !== "off";
   const nb = NB_MODELS.find((m) => m.id === nbModel) || NB_MODELS[0];
@@ -558,7 +609,7 @@ function App() {
   return (
     <div style={{ minHeight: "100vh", background: SHELL.bg, color: SHELL.ink, fontFamily: "'Manrope',sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;700;900&family=Spectral:wght@400;500;600;700&family=Philosopher:wght@400;700&family=El+Messiri:wght@400;500;600;700&family=Marck+Script&family=Pacifico&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Russo+One&family=Bad+Script&family=PT+Sans+Narrow:wght@400;700&family=Pangolin&family=Ruslan+Display&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;700;900&family=Spectral:wght@400;500;600;700&family=Philosopher:wght@400;700&family=El+Messiri:wght@400;500;600;700&family=Marck+Script&family=Pacifico&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Russo+One&family=Bad+Script&family=PT+Sans+Narrow:wght@400;700&family=Pangolin&family=Ruslan+Display&family=Lobster&family=Forum&family=Neucha&family=Alumni+Sans:wght@500;600;700;800&family=Kelly+Slab&family=Rubik+Mono+One&family=Literata:wght@400;500;600;700&family=Old+Standard+TT:wght@400;700&family=Alice&family=Vollkorn:wght@500;600;700&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         input,button,textarea,select{font-family:inherit;}
         button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SHELL.gold};outline-offset:2px;}
@@ -586,58 +637,59 @@ function App() {
                 <span style={{ width: 7, height: 7, borderRadius: 8, background: SHELL.gold }} />
                 <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: "#DCC9A0", fontWeight: 600 }}>Carousel Studio</span>
               </span>
-              <span style={{ display: "flex", gap: 4, flex: "0 0 auto" }}>
-                {TEXT_LANGS.map((l) => (
-                  <button key={l.id} onClick={() => setTextLang(l.id)} title="Мова тексту каруселі"
-                    style={{ padding: "4px 8px", borderRadius: 14, fontSize: 11, letterSpacing: .3, cursor: "pointer", lineHeight: 1,
-                      background: textLang === l.id ? SHELL.gold : "rgba(255,255,255,.05)",
-                      color: textLang === l.id ? "#141210" : "#C9B892",
-                      border: `1px solid ${textLang === l.id ? SHELL.gold : "rgba(198,161,91,.30)"}`,
-                      fontWeight: textLang === l.id ? 700 : 500 }}>
-                    {({ uk: "УКР", ru: "РУС", en: "ENG", de: "DE" })[l.id]}
+              <span style={{ display: "flex", alignItems: "center", gap: 5, flex: "0 0 auto" }}>
+                <span style={{ fontSize: 9, letterSpacing: .5, textTransform: "uppercase", color: "#9C927C", marginRight: 1 }}>{ui.siteLang}</span>
+                {SITE_LANGS.map((l) => (
+                  <button key={l.id} onClick={() => setUiLang(l.id)} title={ui.siteLang}
+                    style={{ padding: "3px 7px", borderRadius: 12, fontSize: 10, letterSpacing: .3, cursor: "pointer", lineHeight: 1,
+                      background: uiLang === l.id ? SHELL.gold : "rgba(255,255,255,.05)",
+                      color: uiLang === l.id ? "#141210" : "#C9B892",
+                      border: `1px solid ${uiLang === l.id ? SHELL.gold : "rgba(198,161,91,.30)"}`,
+                      fontWeight: uiLang === l.id ? 700 : 500 }}>
+                    {l.label}
                   </button>
                 ))}
               </span>
             </div>
 
             <h1 style={{ position: "relative", fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 30, lineHeight: 1.06, margin: "0 0 12px", color: "#F4EDDF" }}>
-              Карусель,<br />що продає
+              {ui.h1a}<br />{ui.h1b}
             </h1>
 
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, margin: "0 0 10px" }}>
               <span style={{ width: 28, height: 1, background: "linear-gradient(90deg, rgba(198,161,91,.95), rgba(198,161,91,0))", flex: "0 0 auto" }} />
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, letterSpacing: .3, color: SHELL.gold }}>
-                глибина + естетика
+                {ui.signature}
               </span>
             </div>
 
             <p style={{ position: "relative", color: "#C9C2B4", fontSize: 14, lineHeight: 1.5, margin: 0 }}>
-              Напрямок, тема, стиль — і карусель, яку хочеться зберегти.
+              {ui.desc}
             </p>
           </div>
         </header>
 
-        <Label>Напрямок</Label>
+        <Label>{ui.niche}</Label>
         <Row>
           {NICHES.map((n) => <Chip key={n} active={niche === n} onClick={() => setNiche(n)}>{n}</Chip>)}
-          <Chip active={niche === "custom"} onClick={() => setNiche("custom")}>+ свій</Chip>
+          <Chip active={niche === "custom"} onClick={() => setNiche("custom")}>{ui.custom}</Chip>
         </Row>
-        {niche === "custom" && <Input value={customNiche} onChange={setCustomNiche} placeholder="Напр.: нумерологія для бізнесу" />}
+        {niche === "custom" && <Input value={customNiche} onChange={setCustomNiche} placeholder={ui.customPh} />}
 
-        <Label>Тема каруселі</Label>
-        <Input value={topic} onChange={setTopic} textarea placeholder="Про що карусель? Напр.: чому клієнти зникають після першої консультації" />
+        <Label>{ui.topic}</Label>
+        <Input value={topic} onChange={setTopic} textarea placeholder={ui.topicPh} />
 
-        <Label>Формат</Label>
+        <Label>{ui.format}</Label>
         <Select value={format} onChange={setFormat} options={FORMATS.map((f) => [f.id, f.label])} />
 
-        <Label>Від кого пишемо</Label>
+        <Label>{ui.voice}</Label>
         <Row>
-          <Chip active={gender === "f"} onClick={() => setGender("f")}>Жіночий рід</Chip>
-          <Chip active={gender === "m"} onClick={() => setGender("m")}>Чоловічий рід</Chip>
-          <Chip active={gender === "n"} onClick={() => setGender("n")}>Нейтрально</Chip>
+          <Chip active={gender === "f"} onClick={() => setGender("f")}>{ui.gF}</Chip>
+          <Chip active={gender === "m"} onClick={() => setGender("m")}>{ui.gM}</Chip>
+          <Chip active={gender === "n"} onClick={() => setGender("n")}>{ui.gN}</Chip>
         </Row>
 
-        <Label>Мова тексту</Label>
+        <Label>{ui.textLangLabel}</Label>
         <Row>
           {TEXT_LANGS.map((l) => (
             <Chip key={l.id} active={textLang === l.id} onClick={() => setTextLang(l.id)}>{l.label}</Chip>
@@ -646,7 +698,7 @@ function App() {
 
         {format === "funnel" && (
           <>
-            <Label>Що продаємо</Label>
+            <Label>{ui.sell}</Label>
             <Row>
               {OFFER_TYPES.map((o) => (
                 <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{o.label}</Chip>
@@ -665,28 +717,28 @@ function App() {
           </>
         )}
 
-        <Label>Стиль тексту</Label>
+        <Label>{ui.style}</Label>
         <Row>
           {STYLES.map((s) => <Chip key={s.id} active={style === s.id} onClick={() => setStyle(s.id)}>{s.label}</Chip>)}
         </Row>
 
-        <Label>Обсяг тексту на слайд</Label>
+        <Label>{ui.volume}</Label>
         <Row>
           {VOLUMES.map((v) => <Chip key={v.id} active={volume === v.id} onClick={() => setVolume(v.id)}>{v.label}</Chip>)}
         </Row>
 
-        <Label>Кількість слайдів</Label>
+        <Label>{ui.count}</Label>
         <Row>{[5, 6, 7, 9, 12, 15, 20].map((c) => <Chip key={c} active={count === c} onClick={() => setCount(c)}>{c}</Chip>)}</Row>
 
         <ToggleRow on={trends} onToggle={() => setTrends((v) => !v)} color={SHELL.live}
-          title="Світові тренди" sub="Пошук свіжих кутів по темі в інтернеті" />
-        <Label>Картинки</Label>
-        <p style={{ fontSize: 12, color: SHELL.sub, margin: "-2px 0 8px" }}>За замовчуванням картинок немає. Увімкни потрібне:</p>
+          title={ui.trendsT} sub={ui.trendsS} />
+        <Label>{ui.images}</Label>
+        <p style={{ fontSize: 12, color: SHELL.sub, margin: "-2px 0 8px" }}>{ui.imagesHint}</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <ImgModeBtn active={imgMode === "prompts"} onClick={() => setImgMode(imgMode === "prompts" ? "off" : "prompts")}
-            title="Промпти для самостійної генерації" sub="У будь-яких АІ-додатках — копіюй та роби сам/а" badge="безкоштовно" badgeColor={SHELL.gold} />
+            title={ui.promptsT} sub={ui.promptsS} badge={ui.free} badgeColor={SHELL.gold} />
           <ImgModeBtn active={imgMode === "paid"} onClick={() => setImgMode(imgMode === "paid" ? "off" : "paid")}
-            title="Автогенерація картинок" sub="Необмежені картинки прямо в додатку" badge="10€/міс" badgeColor={SHELL.live} />
+            title={ui.autoT} sub={ui.autoS} badge="10€/міс" badgeColor={SHELL.live} />
         </div>
 
         {imgMode !== "off" && (
@@ -710,6 +762,23 @@ function App() {
             <p style={{ fontSize: 14, color: SHELL.ink, margin: "0 0 10px", lineHeight: 1.5 }}>
               <b style={{ color: SHELL.gold }}>Nano Banana підключено ✓</b> — картинки генеруються прямо в застосунку через твій сервер.
             </p>
+
+            <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 8px" }}>
+              {uiLang === "en" ? "This is the image style you get:" : "Ось у якому стилі будуть картинки:"}
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+              {[
+                "dark luxury still life, single golden droplet on cracked black glass, cinematic gold light, near-black background",
+                "elegant golden origami crane on dark marble, moody cinematic lighting, near-black, luxury",
+                "golden lotus flower on black volcanic rock, glowing warm light, dark luxury, cinematic",
+              ].map((p, i) => (
+                <div key={i} style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: "#0B0B0D", border: `1px solid ${SHELL.line}` }}>
+                  <img src={imgUrl(p, 100 + i)} alt="" loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.6) 100%)" }} />
+                </div>
+              ))}
+            </div>
             <p style={{ fontSize: 12, color: SHELL.sub, margin: "0 0 6px" }}>Модель (твоя собівартість за 1 зображення):</p>
             <Row>
               {NB_MODELS.map((m) => (
@@ -746,28 +815,27 @@ function App() {
           </div>
         )}
 
-        <Label>Стиль каруселі</Label>
-        <div className="rail" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 2px 8px", scrollbarWidth: "none" }}>
-          {Object.entries(THEMES).map(([id, th]) => (
-            <ThemeCard key={id} th={th} active={themeId === id} onClick={() => setThemeId(id)}
-              fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css} />
-          ))}
+        <Label>{ui.carouselStyle}</Label>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <Select value={themeId} onChange={setThemeId} options={Object.entries(THEMES).map(([id, th]) => [id, th.name])} />
+          </div>
+          <span title={theme.name} style={{ width: 46, height: 46, borderRadius: 12, flex: "0 0 auto", background: theme.bg, border: `1px solid ${SHELL.line}`, boxShadow: "0 4px 12px rgba(0,0,0,.35)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 4, padding: "0 9px" }}>
+            <span style={{ width: 14, height: 3, borderRadius: 2, background: theme.accent }} />
+            <span style={{ width: 24, height: 4, borderRadius: 2, background: theme.ink }} />
+            <span style={{ width: 17, height: 2, borderRadius: 2, background: theme.sub }} />
+          </span>
         </div>
 
-        <Label>Шрифт</Label>
-        <div className="rail" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 2px 12px", scrollbarWidth: "none" }}>
-          <FontCard label="Авто" css={theme.font} active={fontId === "auto"} onClick={() => setFontId("auto")} />
-          {FONTS.map((f) => (
-            <FontCard key={f.id} label={f.label} css={f.css} active={fontId === f.id} onClick={() => setFontId(f.id)} />
-          ))}
-        </div>
+        <Label>{ui.font}</Label>
+        <Select value={fontId} onChange={setFontId} options={[["auto", ui.auto], ...FONTS.map((f) => [f.id, f.label])]} />
 
         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
           <button onClick={run} disabled={loading}
             style={{ flex: 1, background: SHELL.gold, color: "#141210", border: "none", borderRadius: 14, padding: "15px", fontWeight: 700, fontSize: 15, cursor: loading ? "wait" : "pointer", opacity: loading ? .7 : 1 }}>
-            {loading ? "Збираю…" : result ? "Згенерувати ще" : "Створити карусель"}
+            {loading ? ui.building : result ? ui.again : ui.create}
           </button>
-          <button onClick={surprise} title="Здивуй мене"
+          <button onClick={surprise} title={ui.surprise}
             style={{ background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "0 16px", fontSize: 20, cursor: "pointer" }}>✦</button>
         </div>
 
