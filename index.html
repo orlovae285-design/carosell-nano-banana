@@ -208,7 +208,13 @@ const WRITE_RULES = {
   },
 };
 
-// Моделі Nano Banana та ціна за 1 зображення (€, орієнтовно)
+// Культурна адаптація тону під мову аудиторії (маркетинг)
+const CULTURE = {
+  uk: "Аудиторія українськомовна: цінує щирість, тепло, емоційність та особисті історії «від серця». Пиши душевно й живо, але без агресивного тиску.",
+  ru: "Аудитория русскоязычная: ценит искренность, тепло, эмоциональность и личные истории. Пиши душевно и живо, без агрессивного давления.",
+  en: "English-speaking audience: values a clear benefit, a light and friendly tone, and practical takeaways. Be warm but concise; sell through value and clarity, not pressure or hype.",
+  de: "Deutschsprachiges Publikum: schätzt Sachlichkeit, Fakten, Klarheit und Seriosität. Schreibe präzise, ruhig und vertrauenswürdig — ohne übertriebene Emotionen, Pathos oder aufdringliche Verkaufssprache. Belege Aussagen konkret; Vertrauen entsteht durch Genauigkeit, nicht durch Druck.",
+};
 const NB_MODELS = [
   { id: "lite", label: "Nano Banana 2 Lite", price: 0.02, model: "gemini-3.1-flash-lite-image" },
   { id: "nb2", label: "Nano Banana 2", price: 0.045, model: "gemini-3.1-flash-image-preview" },
@@ -306,6 +312,7 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
   const vol = VOLUMES.find((v) => v.id === volume);
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
   const wr = WRITE_RULES[textLang] || WRITE_RULES.uk;
+  const culture = CULTURE[textLang] || CULTURE.uk;
   const genderLine = (wr.gender && wr.gender[gender]) || wr.gender.f;
   const offerLine = (funnelOn)
     ? `\n${OFFER_FUNNEL[offerType] || OFFER_FUNNEL.custom}${(offer && offer.trim()) ? `\nКонкретна пропозиція/назва, до якої ведемо: "${offer.trim()}".` : ""}\nНе тисни агресивно — веди природно. Останній слайд = чіткий CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
@@ -330,6 +337,7 @@ ${trends ? "Спершу знайди в інтернеті свіжі кути 
 
 ЯК ПИСАТИ (критично):
 - ${wr.purity}
+- КУЛЬТУРНА АДАПТАЦІЯ ПІД АУДИТОРІЮ: ${culture}
 - ${genderLine}
 - Живою мовою, як реальна людина. Витримуй обраний стиль тексту.
 - Перший слайд — гачок, що зупиняє палець за секунду.
