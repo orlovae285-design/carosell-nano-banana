@@ -26,7 +26,6 @@ const NICHES = [
 ];
 
 const FORMATS = [
-  { id: "funnel", label: "Воронка продажів → до продукту" },
   { id: "hpsr", label: "Гачок → Біль → Рішення → Результат" },
   { id: "list", label: "Список порад / фішок" },
   { id: "story", label: "Особиста історія" },
@@ -40,8 +39,12 @@ const FORMATS = [
 const OFFER_TYPES = [
   { id: "course", label: "Курс" },
   { id: "practicum", label: "Практикум" },
+  { id: "coaching", label: "Коучинг / супровід" },
   { id: "consult", label: "Консультація" },
+  { id: "webinar", label: "Вебінар / майстер-клас" },
+  { id: "subscription", label: "Підписка" },
   { id: "guide", label: "Міні-гайд" },
+  { id: "leadmagnet", label: "Лід-магніт (безкоштовне)" },
   { id: "service", label: "Послуга" },
   { id: "custom", label: "Своє" },
 ];
@@ -49,8 +52,12 @@ const OFFER_TYPES = [
 const OFFER_FUNNEL = {
   course: "Ти продаєш НАВЧАЛЬНИЙ КУРС. Веди: гачок → біль/нерозв'язана проблема → чому спроби самотужки не працюють → покажи трансформацію, яку дає курс → доказ/результат учнів → CTA на запис або деталі курсу.",
   practicum: "Ти продаєш ПРАКТИКУМ/ІНТЕНСИВ (практика, а не суха теорія). Веди: гачок → знайома болюча ситуація → чому теорія без практики нічого не змінює → що конкретно людина ЗРОБИТЬ і відчує на практикумі → результат → CTA на участь.",
+  coaching: "Ти продаєш КОУЧИНГ/СУПРОВІД (тривала робота 1-на-1 або в групі). Веди: гачок → біль і топтання на місці → чому поодинокі поради не дають системного результату → цінність супроводу крок за кроком → трансформація/кейс → CTA записатися на діагностику або супровід.",
   consult: "Ти продаєш ІНДИВІДУАЛЬНУ КОНСУЛЬТАЦІЮ/СЕСІЮ 1-на-1. Веди: гачок → конкретний біль → чому загальні поради не спрацьовують саме тут → цінність персонального підходу → м'який доказ довіри → CTA записатися (пиши в директ / за посиланням).",
-  guide: "Це ЛІД-МАГНІТ — безкоштовний МІНІ-ГАЙД або чек-лист для збору бази. Веди: гачок → біль → пообіцяй швидке конкретне рішення в гайді → перелічи 2-3 пункти цінності всередині → CTA забрати безкоштовний гайд (кодове слово в коментар / за посиланням).",
+  webinar: "Ти запрошуєш на ВЕБІНАР/МАЙСТЕР-КЛАС (подія). Веди: гачок → актуальний біль → що людина винесе з події (2-3 конкретні результати) → чому саме зараз варто прийти → CTA зареєструватися (безкоштовно або за символічну ціну).",
+  subscription: "Ти продаєш ПІДПИСКУ (щомісячний доступ / клуб / закрита спільнота / розсилка). Веди: гачок → біль, що повторюється → чому разові рішення не тримаються → цінність постійного доступу та спільноти → що входить щомісяця → CTA оформити підписку.",
+  guide: "Ти продаєш недорогий МІНІ-ГАЙД / чек-лист / шаблон (трипваєр). Веди: гачок → біль → пообіцяй швидке конкретне рішення в гайді → перелічи 2-3 пункти цінності всередині → CTA придбати за символічну ціну.",
+  leadmagnet: "Це ЛІД-МАГНІТ — БЕЗКОШТОВНИЙ матеріал (чек-лист, гайд, шаблон) для збору бази. Веди: гачок → біль → пообіцяй швидке конкретне рішення безкоштовно → що всередині (2-3 пункти) → CTA забрати безкоштовно (кодове слово в коментар / за посиланням у шапці).",
   service: "Ти продаєш ПОСЛУГУ/СУПРОВІД (робиш ЗА клієнта). Веди: гачок → біль і ціна бездіяльності → чому робити самотужки довго й дорого → як твоя послуга знімає це з плечей → результат/кейс → CTA залишити заявку.",
   custom: "Це ВОРОНКА ПРОДАЖІВ для товару або послуги, які вкаже автор. Веди природно: гачок → бажання/біль клієнта → чому саме цей товар/послуга це закриває → цінність, деталі, емоція від володіння → доказ якості чи відгук → чіткий CTA (замовити, написати в директ, деталі за посиланням). Пиши доречно саме до вказаного продукту.",
 };
@@ -269,8 +276,9 @@ const STYLE_EN = {
 };
 const VOLUME_EN = { min: "Minimal", med: "Medium", max: "Large" };
 const OFFER_EN = {
-  course: "Course", practicum: "Workshop", consult: "Consultation",
-  guide: "Mini-guide", service: "Service", custom: "Custom",
+  course: "Course", practicum: "Workshop", coaching: "Coaching", consult: "Consultation",
+  webinar: "Webinar / masterclass", subscription: "Subscription", guide: "Mini-guide",
+  leadmagnet: "Lead magnet (free)", service: "Service", custom: "Custom",
 };
 const THEME_EN = {
   noir: "Night & gold", royal: "Royal blue", emerald: "Emerald", editorial: "Cover",
@@ -292,14 +300,14 @@ const PAY_INFO = {
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
 /* ------------------------------------------------------------------ */
 
-function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer, offerType }) {
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer, offerType, funnelOn }) {
   const fmt = FORMATS.find((f) => f.id === format)?.label || format;
   const st = STYLES.find((s) => s.id === style);
   const vol = VOLUMES.find((v) => v.id === volume);
   const langName = lang === "uk" ? "Ukrainian" : lang === "de" ? "German" : "English";
   const wr = WRITE_RULES[textLang] || WRITE_RULES.uk;
   const genderLine = (wr.gender && wr.gender[gender]) || wr.gender.f;
-  const offerLine = (format === "funnel")
+  const offerLine = (funnelOn)
     ? `\n${OFFER_FUNNEL[offerType] || OFFER_FUNNEL.custom}${(offer && offer.trim()) ? `\nКонкретна пропозиція/назва, до якої ведемо: "${offer.trim()}".` : ""}\nНе тисни агресивно — веди природно. Останній слайд = чіткий CTA (напр. «пиши в директ», «деталі за посиланням у шапці»).`
     : "";
   const volLine =
@@ -467,15 +475,15 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         </>
       )}
 
-      <div style={{ position: "relative", height: "100%", padding: "8% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "4%" }}>
+      <div style={{ position: "relative", height: "100%", padding: "6.5% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "3%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "7% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
-          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(17px, 10cqw, 34px)" : "clamp(15px, 8.2cqw, 27px)", lineHeight: 1.12, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "anywhere" }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "visible", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "6% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
+          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 8.6cqw, 30px)" : "clamp(13px, 7.2cqw, 24px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "anywhere" }}>
             {data.title}
           </p>
           {data.body ? (
-            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "4%", marginBottom: 0, fontSize: "clamp(11px, 4.9cqw, 17px)", lineHeight: 1.42, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
+            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "3.5%", marginBottom: 0, fontSize: "clamp(10px, 4.4cqw, 16px)", lineHeight: 1.4, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
               {data.body}
             </p>
           ) : null}
@@ -512,6 +520,7 @@ function App() {
   const [textLang, setTextLang] = useState("uk");
   const [offer, setOffer] = useState("");
   const [offerType, setOfferType] = useState("course");
+  const [funnelOn, setFunnelOn] = useState(false);
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
   const [count, setCount] = useState(6);
@@ -548,7 +557,7 @@ function App() {
     if (!activeNiche) return setError("Обери або впиши напрямок.");
     setError(""); setGenStatus(""); setLoading(true); setResult(null);
     try {
-      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType };
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType, funnelOn };
       setGenStatus(uiLang === "en" ? "Writing the text…" : "Пишу текст каруселі…");
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
@@ -585,7 +594,7 @@ function App() {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
       when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, style, volume, count, imgMode, promptLang, themeId, fontId },
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, imgMode, promptLang, themeId, fontId },
       result: slim,
     };
     persistDrafts([d, ...drafts].slice(0, 12));
@@ -595,7 +604,7 @@ function App() {
     const s = d.settings || {};
     setNiche(s.niche ?? "Психологія"); setCustomNiche(s.customNiche ?? ""); setTopic(s.topic ?? "");
     setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
-    setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setStyle(s.style ?? "emotional");
+    setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStyle(s.style ?? "emotional");
     setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setImgMode(s.imgMode ?? "off");
     setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setFontId(s.fontId ?? "auto");
     slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
@@ -649,6 +658,12 @@ function App() {
         const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
         zip.file(`slide-${String(i + 1).padStart(2, "0")}.png`, blob);
       }
+      const txt =
+        result.slides.map((s, i) => `Слайд ${i + 1}\n${s.title}${s.body ? "\n" + s.body : ""}`).join("\n\n") +
+        (result.caption ? "\n\n— — —\nПідпис до посту:\n" + result.caption : "") +
+        (result.hashtags && result.hashtags.length ? "\n\nХештеги:\n" + result.hashtags.join(" ") : "") +
+        (result.cta ? "\n\nЗаклик:\n" + result.cta : "");
+      zip.file("carousel-text.txt", txt);
       const content = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(content);
       const a = document.createElement("a");
@@ -782,7 +797,11 @@ function App() {
           ))}
         </Row>
 
-        {format === "funnel" && (
+        <ToggleRow on={funnelOn} onToggle={() => setFunnelOn((v) => !v)} color={SHELL.gold}
+          title={uiLang === "en" ? "🎯 Sales funnel mode" : "🎯 Режим воронки продажів"}
+          sub={uiLang === "en" ? "Leads the reader to your offer — works with any format" : "Веде читача до твоєї пропозиції — працює з будь-яким форматом"} />
+
+        {funnelOn && (
           <>
             <Label>{ui.sell}</Label>
             <Row>
@@ -790,14 +809,18 @@ function App() {
                 <Chip key={o.id} active={offerType === o.id} onClick={() => setOfferType(o.id)}>{L(OFFER_EN, o.id, o.label)}</Chip>
               ))}
             </Row>
-            <Label>{offerType === "custom" ? "Впиши, що саме продаєш" : "Назва / деталі пропозиції"}</Label>
+            <Label>{offerType === "custom"
+              ? (uiLang === "en" ? "Describe what you sell" : "Впиши, що саме продаєш")
+              : (uiLang === "en" ? "Offer name / details" : "Назва / деталі пропозиції")}</Label>
             <Input value={offer} onChange={setOffer} textarea
               placeholder={offerType === "custom"
-                ? "Напр.: букети квітів, керамічний посуд ручної роботи, прикраси, одяг, мед…"
-                : "Напр.: курс «Грошовий код», практикум із трансформації, консультація 1-на-1…"} />
+                ? (uiLang === "en" ? "e.g. flower bouquets, handmade ceramics, jewelry, clothing, honey…" : "Напр.: букети квітів, керамічний посуд ручної роботи, прикраси, одяг, мед…")
+                : (uiLang === "en" ? "e.g. \"Money Code\" course, transformation workshop, 1-on-1 consultation…" : "Напр.: курс «Грошовий код», практикум із трансформації, консультація 1-на-1…")} />
             {offerType === "custom" && (
               <p style={{ fontSize: 12, color: SHELL.sub, margin: "6px 0 0", lineHeight: 1.5 }}>
-                Опиши свій товар чи послугу — карусель побудує воронку продажів саме під нього.
+                {uiLang === "en"
+                  ? "Describe your product or service — the carousel builds a sales funnel around it."
+                  : "Опиши свій товар чи послугу — карусель побудує воронку продажів саме під нього."}
               </p>
             )}
           </>
