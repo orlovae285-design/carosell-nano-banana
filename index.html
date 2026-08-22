@@ -87,9 +87,9 @@ const VOLUMES = [
 
 // Формат (співвідношення) слайда
 const SIZES = [
-  { id: "45", label: "4:5 (стрічка)", css: "4 / 5" },
-  { id: "11", label: "1:1 (квадрат)", css: "1 / 1" },
-  { id: "916", label: "9:16 (Reels)", css: "9 / 16" },
+  { id: "45", label: "4:5", css: "4 / 5", use: "стрічка Instagram / Facebook (пости, каруселі)", useEn: "Instagram / Facebook feed (posts, carousels)" },
+  { id: "11", label: "1:1", css: "1 / 1", use: "універсальний: стрічка, LinkedIn, X, прев'ю", useEn: "universal: feed, LinkedIn, X, previews" },
+  { id: "916", label: "9:16", css: "9 / 16", use: "Reels, Stories, TikTok, YouTube Shorts", useEn: "Reels, Stories, TikTok, YouTube Shorts" },
 ];
 
 // Візуальні стилі каруселі (10 різних характерів)
@@ -353,6 +353,7 @@ ${trends ? "Спершу знайди в інтернеті свіжі кути 
 - Кожен слайд лишає бажання гортати далі.
 - Речення різної довжини. Коротко. Потім довше.
 - Конкретика замість води: цифри, приклади, деталі.
+- БЕЗ ПОВТОРІВ: кожен слайд розкриває ОКРЕМУ, нову думку — не повторюй ту саму ідею іншими словами. Заголовки різні за структурою й початком (не починай кілька слайдів однаково). Не дублюй фрази між заголовком і body.
 - ЗАБОРОНЕНО: «у сучасному світі», «важливо зазначити», «розкрити потенціал», канцелярит, кліше, зайві тире.
 - НЕ додавай у текст слайдів службові слова типу «гачок», «біль», «рішення», номери слайдів чи «збережи» — тільки живий контент.
 
@@ -855,10 +856,13 @@ function App() {
         </Row>
 
         <Label>{ui.count}</Label>
-        <Row>{[5, 6, 7, 9, 12, 15, 20].map((c) => <Chip key={c} active={count === c} onClick={() => setCount(c)}>{c}</Chip>)}</Row>
+        <Row>{[5, 6, 7, 8, 9, 10, 12, 15, 20].map((c) => <Chip key={c} active={count === c} onClick={() => setCount(c)}>{c}</Chip>)}</Row>
 
         <Label>{ui.size}</Label>
         <Row>{SIZES.map((z) => <Chip key={z.id} active={ratioId === z.id} onClick={() => setRatioId(z.id)}>{z.label}</Chip>)}</Row>
+        <p style={{ fontSize: 12, color: SHELL.sub, margin: "2px 0 0", lineHeight: 1.5 }}>
+          {(() => { const z = SIZES.find((x) => x.id === ratioId) || SIZES[0]; return z.label + " — " + (uiLang === "en" ? z.useEn : z.use); })()}
+        </p>
 
         <ToggleRow on={trends} onToggle={() => setTrends((v) => !v)} color={SHELL.live}
           title={ui.trendsT} sub={ui.trendsS} />
