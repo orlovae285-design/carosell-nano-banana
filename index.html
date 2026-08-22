@@ -85,6 +85,13 @@ const VOLUMES = [
   { id: "max", label: "Велика", desc: "заголовок + 2-3 короткі речення" },
 ];
 
+// Формат (співвідношення) слайда
+const SIZES = [
+  { id: "45", label: "4:5 (стрічка)", css: "4 / 5" },
+  { id: "11", label: "1:1 (квадрат)", css: "1 / 1" },
+  { id: "916", label: "9:16 (Reels)", css: "9 / 16" },
+];
+
 // Візуальні стилі каруселі (10 різних характерів)
 const THEMES = {
   noir:      { name: "Ніч і золото", bg: "#0B0B0D", ink: "#EFE7D6", sub: "#B7A98A", accent: "#C6A15B", font: "'Cormorant Garamond', serif", cover: 800, border: "1px solid rgba(198,161,91,.45)", mood: "dark luxury, near-black, gold accents, cinematic, elegant" },
@@ -241,6 +248,7 @@ const T = {
     promptsT: "Промпти для самостійної генерації", promptsS: "У будь-яких АІ-додатках — копіюй та роби сам/а", free: "безкоштовно",
     autoT: "Автогенерація картинок", autoS: "Необмежені картинки прямо в додатку",
     carouselStyle: "Стиль каруселі", font: "Шрифт", auto: "Авто", sell: "Що продаємо",
+    size: "Формат слайда",
     create: "Створити карусель", again: "Згенерувати ще", building: "Збираю…", surprise: "Здивуй мене",
   },
   en: {
@@ -258,6 +266,7 @@ const T = {
     promptsT: "Prompts to generate yourself", promptsS: "In any AI app — copy and do it yourself", free: "free",
     autoT: "Auto image generation", autoS: "Unlimited images right in the app",
     carouselStyle: "Carousel style", font: "Font", auto: "Auto", sell: "What you sell",
+    size: "Slide format",
     create: "Create carousel", again: "Generate again", building: "Building…", surprise: "Surprise me",
   },
 };
@@ -456,7 +465,7 @@ function imgUrl(prompt, seed) {
   return `https://image.pollinations.ai/prompt/${q}?width=1024&height=1280&nologo=true&model=flux&seed=${seed || 1}`;
 }
 
-function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, variant }) {
+function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, variant, ratio }) {
   const t = theme;
   const titleFont = fontCss || t.font;
   const hasImg = !!imgSrc;
@@ -469,7 +478,7 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
   return (
     <div
       style={{
-        position: "relative", aspectRatio: "4 / 5", ...sizing,
+        position: "relative", aspectRatio: ratio || "4 / 5", ...sizing,
         borderRadius: 20, background: t.bg, color: ink, border: t.border,
         boxShadow: "0 18px 50px rgba(0,0,0,.45)", overflow: "hidden",
         containerType: "inline-size",
@@ -532,6 +541,7 @@ function App() {
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
   const [count, setCount] = useState(6);
+  const [ratioId, setRatioId] = useState("45");
   const [trends, setTrends] = useState(false);
   const [imgMode, setImgMode] = useState("off"); // off | prompts | paid
   const [nbModel, setNbModel] = useState("lite");
@@ -602,7 +612,7 @@ function App() {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
       when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, imgMode, promptLang, themeId, fontId },
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, ratioId, imgMode, promptLang, themeId, fontId },
       result: slim,
     };
     persistDrafts([d, ...drafts].slice(0, 12));
@@ -613,7 +623,7 @@ function App() {
     setNiche(s.niche ?? "Психологія"); setCustomNiche(s.customNiche ?? ""); setTopic(s.topic ?? "");
     setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
     setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStyle(s.style ?? "emotional");
-    setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setImgMode(s.imgMode ?? "off");
+    setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setRatioId(s.ratioId ?? "45"); setImgMode(s.imgMode ?? "off");
     setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setFontId(s.fontId ?? "auto");
     slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -847,6 +857,9 @@ function App() {
         <Label>{ui.count}</Label>
         <Row>{[5, 6, 7, 9, 12, 15, 20].map((c) => <Chip key={c} active={count === c} onClick={() => setCount(c)}>{c}</Chip>)}</Row>
 
+        <Label>{ui.size}</Label>
+        <Row>{SIZES.map((z) => <Chip key={z.id} active={ratioId === z.id} onClick={() => setRatioId(z.id)}>{z.label}</Chip>)}</Row>
+
         <ToggleRow on={trends} onToggle={() => setTrends((v) => !v)} color={SHELL.live}
           title={ui.trendsT} sub={ui.trendsS} />
         <Label>{ui.images}</Label>
@@ -1013,7 +1026,7 @@ function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12, marginBottom: 8 }}>
                 {result.slides.map((s, i) => (
                   <div key={i} ref={(el) => (slideRefs.current[i] = el)}>
-                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid"
+                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid" ratio={SIZES.find((z) => z.id === ratioId)?.css}
                       isCover={i === 0} isLast={i === result.slides.length - 1}
                       fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
                       imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
@@ -1025,7 +1038,7 @@ function App() {
                 style={{ display: "flex", gap: 14, overflowX: "auto", scrollSnapType: "x mandatory", padding: "4px 2px 14px", scrollbarWidth: "none" }}>
                 {result.slides.map((s, i) => (
                   <div key={i} ref={(el) => (slideRefs.current[i] = el)} style={{ flex: "0 0 auto", scrollSnapAlign: "center" }}>
-                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="rail"
+                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="rail" ratio={SIZES.find((z) => z.id === ratioId)?.css}
                       isCover={i === 0} isLast={i === result.slides.length - 1}
                       fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
                       imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
