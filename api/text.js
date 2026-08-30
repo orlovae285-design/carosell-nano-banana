@@ -1,7 +1,7 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
 // Текст каруселі через Gemini: автоповтор при 429 + низький рівень "мислення" +
 // піднятий ліміт відповіді (щоб 15-20 слайдів не обрізались).
-const MODEL = "gemini-3.7-flash"; // можна змінити на "gemini-3.6-flash"
+const MODEL = "gemini-3.5-flash"; // можна змінити на "gemini-3.6-flash"
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
