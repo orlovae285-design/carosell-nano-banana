@@ -23,6 +23,9 @@ const NICHES = [
   "Б'юті та естетика", "Особистий бренд", "Маркетинг і SMM",
   "Фітнес і тіло", "Фінанси та гроші", "Стосунки", "Батьківство",
   "Здоров'я і нейро", "Їжа та рецепти",
+  "Astrology / Таро", "Нумерологія", "Саморозвиток", "Медитація / усвідомленість",
+  "Кар'єра / HR", "Нерухомість", "Подорожі", "Мода / стиль",
+  "Хендмейд / творчість", "Онлайн-школа / курси", "Нетворкінг", "Духовність",
 ];
 
 const FORMATS = [
@@ -33,6 +36,14 @@ const FORMATS = [
   { id: "mistakes", label: "Помилки, яких припускаються" },
   { id: "guide", label: "Покроковий міні-гайд" },
   { id: "before", label: "До / Після" },
+  { id: "checklist", label: "Чек-лист" },
+  { id: "qa", label: "Питання–відповідь (FAQ)" },
+  { id: "case", label: "Кейс / результат клієнта" },
+  { id: "quotes", label: "Цитати / думки" },
+  { id: "howto", label: "Як зробити (туторіал)" },
+  { id: "topX", label: "Топ-5 / добірка" },
+  { id: "reasons", label: "N причин / чому саме так" },
+  { id: "predict", label: "Прогнози / тренди" },
 ];
 
 // Що саме продаємо у воронці (кожен тип = своя структура воронки)
@@ -77,6 +88,12 @@ const STYLES = [
   { id: "honest", label: "Відвертий", note: "чесно і вразливо, від душі" },
   { id: "luxury", label: "Преміум", note: "стримано, елегантно, відчуття дорогого" },
   { id: "mystic", label: "Містичний", note: "загадково, езотерично, глибинно" },
+  { id: "playful", label: "Грайливий", note: "легко, з енергією, весело" },
+  { id: "calm", label: "Спокійний", note: "врівноважено, м'яко, без поспіху" },
+  { id: "punchy", label: "Хльосткий", note: "коротко, різко, б'є в ціль" },
+  { id: "warm", label: "Теплий", note: "затишно, підтримка, обійми словами" },
+  { id: "sales", label: "Продаючий", note: "чіткі вигоди, заклик, дія" },
+  { id: "edu", label: "Навчальний", note: "пояснює просто й структуровано" },
 ];
 
 const VOLUMES = [
@@ -110,6 +127,14 @@ const THEMES = {
   rose:      { name: "Троянда", bg: "linear-gradient(160deg,#F6E2E6,#EFD0D8)", ink: "#4A2530", sub: "#9E6B79", accent: "#C25E7A", font: "'Cormorant Garamond', serif", cover: 700, border: "none", mood: "soft blush rose pink, romantic, delicate, feminine, elegant" },
   steel:     { name: "Сталь", bg: "linear-gradient(160deg,#20242B,#2E343D)", ink: "#EAEEF3", sub: "#9AA6B2", accent: "#7FB0D9", font: "'Manrope', sans-serif", cover: 700, border: "1px solid rgba(127,176,217,.3)", mood: "cool graphite steel gray, blue accent, modern, sharp, corporate premium" },
   ocean:     { name: "Океан", bg: "linear-gradient(160deg,#06373D,#0A4E52)", ink: "#EAFBF7", sub: "#8FC6C2", accent: "#F0C987", font: "'Cormorant Garamond', serif", cover: 700, border: "1px solid rgba(240,201,135,.3)", mood: "deep teal ocean green, warm gold accent, serene, luxurious" },
+  butter:    { name: "Масляний жовтий", bg: "linear-gradient(160deg,#FBF0C9,#F6E3A3)", ink: "#3B3115", sub: "#8A7A45", accent: "#C79A2E", font: "'Unbounded', sans-serif", cover: 700, border: "none", mood: "soft butter yellow, cream, warm, cozy trendy pastel" },
+  lavender:  { name: "Лаванда", bg: "linear-gradient(160deg,#E9E4F7,#D9CEF0)", ink: "#332A48", sub: "#7C6E9A", accent: "#8B5CF6", font: "'Manrope', sans-serif", cover: 700, border: "none", mood: "digital lavender, soft purple, calm, modern, dreamy" },
+  cherry:    { name: "Вишня", bg: "linear-gradient(160deg,#2A0A10,#4A0E1A)", ink: "#FBE9EC", sub: "#D19AA6", accent: "#E4324B", font: "'Playfair Display', serif", cover: 700, border: "1px solid rgba(228,50,75,.35)", mood: "deep cherry red, dark, bold, passionate, cinematic" },
+  sage:      { name: "Шавлія", bg: "linear-gradient(160deg,#DDE6D5,#C7D6BC)", ink: "#2E3826", sub: "#6E7D60", accent: "#5B7B4A", font: "'Cormorant Garamond', serif", cover: 700, border: "none", mood: "sage green, natural, calm, organic, botanical minimal" },
+  terracotta:{ name: "Теракота", bg: "linear-gradient(160deg,#F2D8C7,#E4B79C)", ink: "#3E241A", sub: "#8F6650", accent: "#C1583A", font: "'Unbounded', sans-serif", cover: 700, border: "none", mood: "warm terracotta clay, earthy, cozy, natural, sunset tones" },
+  midnight:  { name: "Північ", bg: "linear-gradient(160deg,#0B1020,#151B33)", ink: "#EAEFFF", sub: "#8E9BC4", accent: "#7C9CFF", font: "'Manrope', sans-serif", cover: 700, border: "1px solid rgba(124,156,255,.28)", mood: "midnight blue-black, cool tech glow, modern, sleek" },
+  champagne: { name: "Шампань", bg: "linear-gradient(160deg,#F3EBDD,#E7D6BE)", ink: "#3A3020", sub: "#8A785C", accent: "#B79256", font: "'Prata', serif", cover: 700, border: "none", mood: "champagne beige, soft gold, elegant, refined, wedding luxe" },
+  onyx:      { name: "Онікс", bg: "#101012", ink: "#F2F2F4", sub: "#9A9AA2", accent: "#FFFFFF", font: "'Unbounded', sans-serif", cover: 800, border: "1px solid rgba(255,255,255,.14)", mood: "pure black onyx, white type, ultra minimal, high fashion, editorial" },
 };
 
 // 10 найпопулярніших шрифтів 2026 (усі з кирилицею)
@@ -154,6 +179,14 @@ const FONTS = [
   { id: "oldstandard", label: "Old Standard (література)", css: "'Old Standard TT', serif" },
   { id: "alice", label: "Alice (література)", css: "'Alice', serif" },
   { id: "vollkorn", label: "Vollkorn (література)", css: "'Vollkorn', serif" },
+  { id: "commissioner", label: "Commissioner (модерн)", css: "'Commissioner', sans-serif" },
+  { id: "cuprum", label: "Cuprum (вузький)", css: "'Cuprum', sans-serif" },
+  { id: "wixmadefor", label: "Wix Madefor (модерн)", css: "'Wix Madefor Display', sans-serif" },
+  { id: "yanone", label: "Yanone (постер)", css: "'Yanone Kaffeesatz', sans-serif" },
+  { id: "tenor", label: "Tenor Sans (люкс)", css: "'Tenor Sans', sans-serif" },
+  { id: "cormorantsc", label: "Cormorant SC (капітель)", css: "'Cormorant SC', serif" },
+  { id: "marmelad", label: "Marmelad (м'який)", css: "'Marmelad', sans-serif" },
+  { id: "underdog", label: "Underdog (декор)", css: "'Underdog', serif" },
 ];
 
 // Мова промптів для картинок
@@ -300,6 +333,8 @@ const THEME_EN = {
   magazine: "Magazine", gradient: "Gradient", coral: "Coral", pastel: "Pastel",
   minimal: "Minimal", neon: "Neon", oldpaper: "Old paper", bordeaux: "Wine",
   mocha: "Mocha", rose: "Rose", steel: "Steel", ocean: "Ocean",
+  butter: "Butter yellow", lavender: "Digital lavender", cherry: "Cherry", sage: "Sage green",
+  terracotta: "Terracotta", midnight: "Midnight blue", champagne: "Champagne", onyx: "Onyx",
 };
 
 // ▼▼ ОПЛАТА: встав своє посилання АБО реквізити. Код доступу видаєш людині ПІСЛЯ оплати. ▼▼
@@ -461,9 +496,9 @@ async function callNanoBanana(prompt, model, code) {
 }
 
 // Безключова генерація картинки за промптом (для перегляду в додатку)
-function imgUrl(prompt, seed) {
+function imgUrl(prompt, seed, w, h) {
   const q = encodeURIComponent((prompt || "") + ", premium editorial, cinematic lighting, high detail, clean background with empty space for text, absolutely no text, no letters, no words, no watermark");
-  return `https://image.pollinations.ai/prompt/${q}?width=1024&height=1280&nologo=true&model=flux&seed=${seed || 1}`;
+  return `https://image.pollinations.ai/prompt/${q}?width=${w || 1024}&height=${h || 1280}&nologo=true&model=flux&seed=${seed || 1}`;
 }
 
 function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, variant, ratio }) {
@@ -528,6 +563,27 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
 /*  ГОЛОВНИЙ КОМПОНЕНТ                                                  */
 /* ------------------------------------------------------------------ */
 
+function hexLum(hex) {
+  const h = (hex || "").replace("#", "");
+  if (h.length < 6) return 0;
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+function buildCustomTheme(bg, accent) {
+  const light = hexLum(bg) > 0.6;
+  return {
+    name: "Свій колір",
+    bg: bg || "#0B0B0D",
+    ink: light ? "#161310" : "#F5EEE1",
+    sub: light ? "rgba(22,19,16,.62)" : "rgba(245,238,225,.72)",
+    accent: accent || "#C6A15B",
+    font: "'Manrope', sans-serif",
+    cover: 700,
+    border: "none",
+    mood: "custom brand-color background, clean, elegant, premium, cinematic",
+  };
+}
+
 function App() {
   const [niche, setNiche] = useState("Психологія");
   const [customNiche, setCustomNiche] = useState("");
@@ -549,6 +605,8 @@ function App() {
   const [accessCode, setAccessCode] = useState("");
   const [promptLang, setPromptLang] = useState("en");
   const [themeId, setThemeId] = useState("noir");
+  const [customBg, setCustomBg] = useState("#0E1630");
+  const [customAccent, setCustomAccent] = useState("#C6A15B");
   const [fontId, setFontId] = useState("auto");
   const [viewMode, setViewMode] = useState("grid");
 
@@ -564,7 +622,7 @@ function App() {
   const railRef = useRef(null);
   const slideRefs = useRef([]);
   const [downloading, setDownloading] = useState(false);
-  const theme = THEMES[themeId];
+  const theme = themeId === "custom" ? buildCustomTheme(customBg, customAccent) : THEMES[themeId];
   const ui = T[uiLang] || T.uk;
   const L = (map, key, fb) => (uiLang === "en" && map[key]) ? map[key] : fb;
   const activeNiche = niche === "custom" ? customNiche.trim() : niche;
@@ -613,7 +671,7 @@ function App() {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
       when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, ratioId, imgMode, promptLang, themeId, fontId },
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, ratioId, imgMode, promptLang, themeId, customBg, customAccent, fontId },
       result: slim,
     };
     persistDrafts([d, ...drafts].slice(0, 12));
@@ -625,7 +683,7 @@ function App() {
     setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
     setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStyle(s.style ?? "emotional");
     setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setRatioId(s.ratioId ?? "45"); setImgMode(s.imgMode ?? "off");
-    setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setFontId(s.fontId ?? "auto");
+    setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setCustomBg(s.customBg ?? "#0E1630"); setCustomAccent(s.customAccent ?? "#C6A15B"); setFontId(s.fontId ?? "auto");
     slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -679,9 +737,17 @@ function App() {
       }
       const txt =
         result.slides.map((s, i) => `Слайд ${i + 1}\n${s.title}${s.body ? "\n" + s.body : ""}`).join("\n\n") +
+        (result.hooks && result.hooks.length > 1 ? "\n\n— — —\nВаріанти заголовка для обкладинки:\n" + result.hooks.map((h, i) => (i + 1) + ". " + h).join("\n") : "") +
         (result.caption ? "\n\n— — —\nПідпис до посту:\n" + result.caption : "") +
         (result.hashtags && result.hashtags.length ? "\n\nХештеги:\n" + result.hashtags.join(" ") : "") +
-        (result.cta ? "\n\nЗаклик:\n" + result.cta : "");
+        (result.cta ? "\n\nЗаклик:\n" + result.cta : "") +
+        ((() => {
+          const withImg = result.slides.filter((s) => s.img);
+          return withImg.length
+            ? "\n\n— — —\nБЕЗКОШТОВНІ ПРОМПТИ ДЛЯ КАРТИНОК (встав у будь-який AI — напр. Google AI Studio, формат 4:5):\n" +
+              withImg.map((s, i) => (i + 1) + ". " + s.img).join("\n\n")
+            : "";
+        })());
       zip.file("carousel-text.txt", txt);
       const content = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(content);
@@ -729,7 +795,7 @@ function App() {
   return (
     <div style={{ minHeight: "100vh", background: SHELL.bg, color: SHELL.ink, fontFamily: "'Manrope',sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;700;900&family=Spectral:wght@400;500;600;700&family=Philosopher:wght@400;700&family=El+Messiri:wght@400;500;600;700&family=Marck+Script&family=Pacifico&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Russo+One&family=Bad+Script&family=PT+Sans+Narrow:wght@400;700&family=Pangolin&family=Ruslan+Display&family=Lobster&family=Forum&family=Neucha&family=Alumni+Sans:wght@500;600;700;800&family=Kelly+Slab&family=Rubik+Mono+One&family=Literata:wght@400;500;600;700&family=Old+Standard+TT:wght@400;700&family=Alice&family=Vollkorn:wght@500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@500;700;800&family=Onest:wght@400;600;800&family=Golos+Text:wght@500;700;800&family=Oswald:wght@500;700&family=Rubik:wght@500;700;800&family=Comfortaa:wght@500;700&family=Prata&family=Nunito:wght@500;700;800&family=Caveat:wght@500;700&family=Yeseva+One&family=Raleway:wght@500;700;800&family=Lora:wght@500;600;700&family=PT+Serif:wght@400;700&family=Merriweather:wght@400;700;900&family=Spectral:wght@400;500;600;700&family=Philosopher:wght@400;700&family=El+Messiri:wght@400;500;600;700&family=Marck+Script&family=Pacifico&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Russo+One&family=Bad+Script&family=PT+Sans+Narrow:wght@400;700&family=Pangolin&family=Ruslan+Display&family=Lobster&family=Forum&family=Neucha&family=Alumni+Sans:wght@500;600;700;800&family=Kelly+Slab&family=Rubik+Mono+One&family=Literata:wght@400;500;600;700&family=Old+Standard+TT:wght@400;700&family=Alice&family=Vollkorn:wght@500;600;700&family=Commissioner:wght@400;600;800&family=Cuprum:wght@500;700&family=Wix+Madefor+Display:wght@500;700;800&family=Yanone+Kaffeesatz:wght@500;700&family=Tenor+Sans&family=Cormorant+SC:wght@500;600;700&family=Marmelad&family=Underdog&display=swap');
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         input,button,textarea,select{font-family:inherit;}
         button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid ${SHELL.gold};outline-offset:2px;}
@@ -956,10 +1022,27 @@ function App() {
         <Label>{ui.carouselStyle}</Label>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <Select value={themeId} onChange={setThemeId} options={Object.entries(THEMES).map(([id, th]) => [id, L(THEME_EN, id, th.name)])} />
+            <Select value={themeId} onChange={setThemeId} options={[...Object.entries(THEMES).map(([id, th]) => [id, L(THEME_EN, id, th.name)]), ["custom", uiLang === "en" ? "🎨 Custom color" : "🎨 Свій колір"]]} />
           </div>
           <span title={theme.name} style={{ width: 46, height: 46, borderRadius: 12, flex: "0 0 auto", background: theme.bg, border: `1px solid ${SHELL.line}`, boxShadow: "0 4px 12px rgba(0,0,0,.35)" }} />
         </div>
+        {themeId === "custom" && (
+          <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: SHELL.ink }}>
+              <input type="color" value={customBg} onChange={(e) => setCustomBg(e.target.value)}
+                style={{ width: 40, height: 32, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer" }} />
+              {uiLang === "en" ? "Background" : "Фон"}
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: SHELL.ink }}>
+              <input type="color" value={customAccent} onChange={(e) => setCustomAccent(e.target.value)}
+                style={{ width: 40, height: 32, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer" }} />
+              {uiLang === "en" ? "Accent" : "Акцент"}
+            </label>
+            <span style={{ fontSize: 11, color: SHELL.sub, alignSelf: "center", flex: "1 1 100%", lineHeight: 1.5 }}>
+              {uiLang === "en" ? "Text color is picked automatically (light/dark) for readability." : "Колір тексту підбирається автоматично (світлий/темний) для читабельності."}
+            </span>
+          </div>
+        )}
 
         <Label>{ui.font}</Label>
         <Select value={fontId} onChange={setFontId} options={[["auto", ui.auto], ...FONTS.map((f) => [f.id, f.label])]} />
@@ -1070,9 +1153,9 @@ function App() {
             {imagesOn && result.slides.some((s) => s.img) && (
               <>
                 <Label>{imgMode === "paid" ? "Приклад готових картинок Nano Banana" : "Безкоштовний перегляд"}</Label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 8, marginBottom: 10 }}>
                   {result.slides.filter((s) => s.img).map((s, i) => (
-                    <ImageTile key={i} src={s.realImg || imgUrl(s.img, i + 1)} prompt={s.img} idx={i + 1} />
+                    <ImageTile key={i} src={s.realImg || imgUrl(s.img, i + 1, 400, 500)} prompt={s.img} idx={i + 1} mini />
                   ))}
                 </div>
                 {imgMode === "paid" ? (
@@ -1255,10 +1338,10 @@ function DemoSlide({ bg, orb, img, title }) {
   );
 }
 
-function ImageTile({ src, prompt, idx }) {
+function ImageTile({ src, prompt, idx, mini }) {
   const [state, setState] = useState("load"); // load | ok | err
   return (
-    <div style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 12, overflow: "hidden", background: SHELL.panel, border: `1px solid ${SHELL.line}` }}>
+    <div title={prompt} style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 10, overflow: "hidden", background: SHELL.panel, border: `1px solid ${SHELL.line}` }}>
       {state !== "err" ? (
         <a href={src} target="_blank" rel="noreferrer" style={{ display: "block", width: "100%", height: "100%" }}>
           <img src={src} alt={"Слайд " + idx} loading="lazy"
@@ -1266,16 +1349,20 @@ function ImageTile({ src, prompt, idx }) {
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: state === "ok" ? 1 : 0, transition: "opacity .4s" }} />
         </a>
       ) : (
-        <div style={{ padding: 12, fontSize: 11, color: SHELL.sub, lineHeight: 1.4 }}>
-          Картинку не вдалось показати тут. Промпт: {prompt}
-        </div>
+        mini ? (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: SHELL.sub, fontSize: 16 }}>⟳</div>
+        ) : (
+          <div style={{ padding: 12, fontSize: 11, color: SHELL.sub, lineHeight: 1.4 }}>
+            Картинку не вдалось показати тут. Промпт: {prompt}
+          </div>
+        )
       )}
       {state === "load" && (
-        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: SHELL.sub, fontSize: 12 }}>
-          малюю…
+        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: SHELL.sub, fontSize: mini ? 10 : 12 }}>
+          {mini ? "…" : "малюю…"}
         </span>
       )}
-      <span style={{ position: "absolute", top: 6, left: 8, fontSize: 11, color: "#fff", background: "rgba(0,0,0,.5)", padding: "2px 7px", borderRadius: 10 }}>{idx}</span>
+      <span style={{ position: "absolute", top: 5, left: 6, fontSize: 10, color: "#fff", background: "rgba(0,0,0,.5)", padding: "1px 6px", borderRadius: 10 }}>{idx}</span>
     </div>
   );
 }
