@@ -407,12 +407,13 @@ ${trends ? "Спершу знайди в інтернеті свіжі кути 
 {
  "hooks": ["3 різні варіанти гачка для обкладинки, кожен до 12 слів"],
  "slides": [ {"title":"головна думка, до 14 слів","body":"за обсягом вище або порожньо"${images ? `,"img":"short ${langName} prompt for a premium image for this slide"` : ""}} ],
- "caption":"підпис до посту, 2-4 живих речення",
- "hashtags":["3-5 хештегів"],
+ "caption":"підпис до посту: 3-5 живих речень, розбитий на 2-3 короткі абзаци (розділяй порожнім рядком), доречні емодзі на початку абзаців, а в кінці — питання до аудиторії, щоб спонукати коментувати",
+ "hashtags":["8-12 релевантних хештегів (суміш популярних і нішевих)"],
  "cta":"заклик одним рядком"
 }
 ${images ? `Для кожного слайда додай "img": короткий (до 22 слів) промпт МОВОЮ ${langName} для генерації преміальної картинки у стилі: ${themeMood}. Єдина естетика на всю карусель, кінематографічне світло, елегантно, місце під текст.` : ""}
-slides має містити рівно ${count} елементів. Перший — обкладинка (title = найсильніший гачок). Тримай усе стисло, щоб відповідь вмістилася повністю. Пам'ятай: увесь видимий текст — мовою ${wr.lname}.`;
+ОБКЛАДИНКА (слайд 1): це ТІЛЬКИ гачок — потужний короткий заголовок (title). body ПЕРШОГО слайда лишай ПОРОЖНІМ ("body":""). Не вантаж обкладинку текстом — уся суть починається з другого слайда.
+slides має містити рівно ${count} елементів. Перший — обкладинка (title = найсильніший гачок, body порожній). Тримай усе стисло, щоб відповідь вмістилася повністю. Пам'ятай: увесь видимий текст — мовою ${wr.lname}.`;
 }
 
 // Стійкий розбір JSON: спершу нормально, потім рятуємо слайди з обрізаної відповіді
@@ -700,6 +701,18 @@ function App() {
   }
   function deleteDraft(id) {
     persistDrafts(drafts.filter((x) => x.id !== id));
+  }
+
+  function loadExample() {
+    const examples = [
+      { niche: "Психологія", topic: "чому ми відкладаємо життя на потім і як це зупинити", format: "hpsr", style: "emotional" },
+      { niche: "Трансформація / езотерика", topic: "5 ознак, що твоя енергія витікає, і як її повернути", format: "list", style: "mystic" },
+      { niche: "Бізнес і коучинг", topic: "3 помилки, через які клієнти зникають після першої консультації", format: "mistakes", style: "expert" },
+      { niche: "Особистий бренд", topic: "як писати про себе так, щоб хотілось підписатись", format: "guide", style: "friend" },
+      { niche: "Стосунки", topic: "тихі сигнали, що партнер вигорає у стосунках", format: "myth", style: "tender" },
+    ];
+    const e = examples[Math.floor(Math.random() * examples.length)];
+    setNiche(e.niche); setCustomNiche(""); setTopic(e.topic); setFormat(e.format); setStyle(e.style);
   }
 
   function surprise() {
@@ -1063,6 +1076,8 @@ function App() {
             style={{ flex: 1, background: SHELL.gold, color: "#141210", border: "none", borderRadius: 14, padding: "15px", fontWeight: 700, fontSize: 15, cursor: loading ? "wait" : "pointer", opacity: loading ? .7 : 1 }}>
             {loading ? ui.building : result ? ui.again : ui.create}
           </button>
+          <button onClick={loadExample} title={uiLang === "en" ? "Fill an example" : "Заповнити приклад"}
+            style={{ background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "0 14px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>{uiLang === "en" ? "Example" : "Приклад"}</button>
           <button onClick={surprise} title={ui.surprise}
             style={{ background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 14, padding: "0 16px", fontSize: 20, cursor: "pointer" }}>✦</button>
         </div>
@@ -1122,14 +1137,22 @@ function App() {
 
             {viewMode === "grid" ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12, marginBottom: 8 }}>
-                {result.slides.map((s, i) => (
-                  <div key={i} ref={(el) => (slideRefs.current[i] = el)}>
-                    <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid" ratio={SIZES.find((z) => z.id === ratioId)?.css}
-                      isCover={i === 0} isLast={i === result.slides.length - 1}
-                      fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
-                      imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
+                {result.slides.map((s, i) => {
+                  const chars = (s.title || "").length + (s.body || "").length;
+                  return (
+                  <div key={i}>
+                    <div ref={(el) => (slideRefs.current[i] = el)}>
+                      <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid" ratio={SIZES.find((z) => z.id === ratioId)?.css}
+                        isCover={i === 0} isLast={i === result.slides.length - 1}
+                        fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
+                        imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
+                    </div>
+                    <div style={{ fontSize: 10, color: chars > 200 ? SHELL.live : SHELL.sub, textAlign: "center", marginTop: 4 }}>
+                      {chars} {uiLang === "en" ? "chars" : "симв."}{chars > 200 ? (uiLang === "en" ? " · long" : " · багато") : ""}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div ref={railRef} className="rail"
@@ -1195,10 +1218,12 @@ function App() {
             )}
 
             {result.caption && (
-              <Card title="Підпис до посту" onCopy={() => copy(result.caption, "cap")} copied={copied === "cap"}>{result.caption}</Card>
+              <Card title="Підпис до посту" onCopy={() => copy(result.caption, "cap")} copied={copied === "cap"}>
+                <span style={{ whiteSpace: "pre-line" }}>{result.caption}</span>
+              </Card>
             )}
             {result.hashtags?.length > 0 && (
-              <Card title="Хештеги" onCopy={() => copy(result.hashtags.join(" "), "tags")} copied={copied === "tags"}>{result.hashtags.join("  ")}</Card>
+              <Card title="Хештеги — у перший коментар" onCopy={() => copy(result.hashtags.join(" "), "tags")} copied={copied === "tags"}>{result.hashtags.join("  ")}</Card>
             )}
             {imgMode === "prompts" && imgPrompts && (
               <Card title="Промпти для самостійної генерації (AI Studio)" onCopy={() => copy(imgPrompts, "img")} copied={copied === "img"}>
