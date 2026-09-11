@@ -399,13 +399,14 @@ ${trends ? "Спершу знайди в інтернеті свіжі кути 
 - Кожен слайд лишає бажання гортати далі.
 - Речення різної довжини. Коротко. Потім довше.
 - Конкретика замість води: цифри, приклади, деталі.
+- ЛИШЕ ПЕРЕВІРЕНІ НАУКОЮ поради: спирайся на визнані наукою факти й принципи (психологія, нейронаука, медицина тощо). Якщо доречно — можеш згадати галузь або реально відомого дослідника/науковий підхід (напр. «дослідження про звички», «за принципом…»), АЛЕ НЕ ВИГАДУЙ конкретних імен, назв досліджень, дат чи цифр, яких не існує. Краще без імені, ніж вигадане.
 - БЕЗ ПОВТОРІВ: кожен слайд розкриває ОКРЕМУ, нову думку — не повторюй ту саму ідею іншими словами. Заголовки різні за структурою й початком (не починай кілька слайдів однаково). Не дублюй фрази між заголовком і body.
 - ЗАБОРОНЕНО: «у сучасному світі», «важливо зазначити», «розкрити потенціал», канцелярит, кліше, зайві тире.
 - НЕ додавай у текст слайдів службові слова типу «гачок», «біль», «рішення», номери слайдів чи «збережи» — тільки живий контент.
 
 Поверни ЛИШЕ валідний JSON без пояснень і без \`\`\`:
 {
- "hooks": ["3 різні варіанти гачка для обкладинки, кожен до 12 слів"],
+ "hooks": ["5 РІЗНИХ, несхожих між собою варіантів гачка для обкладинки, кожен до 12 слів — різні за структурою й кутом, без повторів ідей"],
  "slides": [ {"title":"головна думка, до 14 слів","body":"за обсягом вище або порожньо"${images ? `,"img":"short ${langName} prompt for a premium image for this slide"` : ""}} ],
  "caption":"підпис до посту: 3-5 живих речень, розбитий на 2-3 короткі абзаци (розділяй порожнім рядком), доречні емодзі на початку абзаців, а в кінці — питання до аудиторії, щоб спонукати коментувати",
  "hashtags":["8-12 релевантних хештегів (суміш популярних і нішевих)"],
@@ -540,11 +541,11 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         </>
       )}
 
-      <div style={{ position: "relative", height: "100%", padding: "6.5% 7%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "3%" }}>
+      <div style={{ position: "relative", height: "100%", padding: "8% 9%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "3%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
         <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "visible", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "6% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
-          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(15px, 8.6cqw, 30px)" : "clamp(13px, 7.2cqw, 24px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "anywhere" }}>
+          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(14px, 8cqw, 28px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "break-word", wordBreak: "normal", hyphens: "auto" }}>
             {data.title}
           </p>
           {data.body ? (
@@ -575,6 +576,9 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
 /*  ГОЛОВНИЙ КОМПОНЕНТ                                                  */
 /* ------------------------------------------------------------------ */
 
+function withHashes(arr) {
+  return (arr || []).map((h) => "#" + String(h).trim().replace(/^#+/, "").replace(/\s+/g, "")).join(" ");
+}
 function hexLum(hex) {
   const h = (hex || "").replace("#", "");
   if (h.length < 6) return 0;
@@ -763,7 +767,7 @@ function App() {
         result.slides.map((s, i) => `Слайд ${i + 1}\n${s.title}${s.body ? "\n" + s.body : ""}`).join("\n\n") +
         (result.hooks && result.hooks.length > 1 ? "\n\n— — —\nВаріанти заголовка для обкладинки:\n" + result.hooks.map((h, i) => (i + 1) + ". " + h).join("\n") : "") +
         (result.caption ? "\n\n— — —\nПідпис до посту:\n" + result.caption : "") +
-        (result.hashtags && result.hashtags.length ? "\n\nХештеги:\n" + result.hashtags.join(" ") : "") +
+        (result.hashtags && result.hashtags.length ? "\n\nХештеги (у перший коментар):\n" + withHashes(result.hashtags) : "") +
         (result.cta ? "\n\nЗаклик:\n" + result.cta : "") +
         ((() => {
           const withImg = result.slides.filter((s) => s.img);
@@ -808,7 +812,7 @@ function App() {
 
   const allText = result
     ? result.slides.map((s, i) => `${i + 1}. ${s.title}${s.body ? "\n" + s.body : ""}`).join("\n\n") +
-      "\n\n" + (result.caption || "") + "\n\n" + (result.hashtags || []).join(" ")
+      "\n\n" + (result.caption || "") + "\n\n" + withHashes(result.hashtags)
     : "";
   const imgList = result?.slides?.filter((s) => s.img)
     .map((s, i) => `${i + 1}. ${s.img} — vertical 4:5, space for text`).join("\n\n");
@@ -1223,7 +1227,7 @@ function App() {
               </Card>
             )}
             {result.hashtags?.length > 0 && (
-              <Card title="Хештеги — у перший коментар" onCopy={() => copy(result.hashtags.join(" "), "tags")} copied={copied === "tags"}>{result.hashtags.join("  ")}</Card>
+              <Card title="Хештеги — у перший коментар" onCopy={() => copy(withHashes(result.hashtags), "tags")} copied={copied === "tags"}>{withHashes(result.hashtags)}</Card>
             )}
             {imgMode === "prompts" && imgPrompts && (
               <Card title="Промпти для самостійної генерації (AI Studio)" onCopy={() => copy(imgPrompts, "img")} copied={copied === "img"}>
