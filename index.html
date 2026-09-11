@@ -361,7 +361,7 @@ const PAY_INFO = {
 /*  ПРОМПТ + ГЕНЕРАЦІЯ                                                  */
 /* ------------------------------------------------------------------ */
 
-function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer, offerType, funnelOn }) {
+function buildPrompt({ niche, topic, format, count, trends, style, volume, images, themeMood, lang, textLang, gender, offer, offerType, funnelOn, structOn }) {
   const fmt = FORMATS.find((f) => f.id === format)?.label || format;
   const st = STYLES.find((s) => s.id === style);
   const vol = VOLUMES.find((v) => v.id === volume);
@@ -545,11 +545,11 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
         <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "visible", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "6% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
-          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(14px, 8cqw, 28px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "break-word", wordBreak: "normal", hyphens: "auto" }}>
+          <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(14px, 8cqw, 28px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "normal", wordBreak: "keep-all", hyphens: "manual" }}>
             {data.title}
           </p>
           {data.body ? (
-            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "3.5%", marginBottom: 0, fontSize: "clamp(10px, 4.4cqw, 16px)", lineHeight: 1.4, color: sub, textShadow: shadow, overflowWrap: "anywhere" }}>
+            <p style={{ fontFamily: "'Manrope',sans-serif", marginTop: "3.5%", marginBottom: 0, fontSize: "clamp(10px, 4.4cqw, 16px)", lineHeight: 1.4, color: sub, textShadow: shadow, overflowWrap: "normal", wordBreak: "keep-all" }}>
               {data.body}
             </p>
           ) : null}
@@ -755,6 +755,8 @@ function App() {
     try {
       const html2canvas = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "html2canvas");
       const JSZip = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", "JSZip");
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+      await new Promise((r) => setTimeout(r, 200));
       const zip = new JSZip();
       for (let i = 0; i < slideRefs.current.length; i++) {
         const node = slideRefs.current[i];
@@ -793,6 +795,8 @@ function App() {
     setDownloading(true);
     try {
       const html2canvas = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "html2canvas");
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+      await new Promise((r) => setTimeout(r, 200));
       for (let i = 0; i < slideRefs.current.length; i++) {
         const node = slideRefs.current[i];
         if (!node) continue;
