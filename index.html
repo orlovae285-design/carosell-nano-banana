@@ -590,6 +590,17 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
 function withHashes(arr) {
   return (arr || []).map((h) => "#" + String(h).trim().replace(/^#+/, "").replace(/\s+/g, "")).join(" ");
 }
+function hookScore(title, en) {
+  const t = (title || "").trim();
+  const words = t ? t.split(/\s+/).length : 0;
+  const hasNum = /\d/.test(t);
+  const hasQ = /[?？]/.test(t);
+  if (!t) return null;
+  if (words > 13) return { label: en ? "✂️ long — shorten" : "✂️ довгий — скороти", color: "#FF5D57" };
+  if (words >= 4 && words <= 12 && (hasNum || hasQ)) return { label: en ? "🔥 strong hook" : "🔥 сильний гачок", color: "#57E7C2" };
+  if (words >= 3 && words <= 12) return { label: en ? "✅ good — a number or question would help" : "✅ добрий — додай цифру чи питання", color: "#C6A15B" };
+  return { label: en ? "· ok" : "· норм", color: "#8E8A80" };
+}
 function hexLum(hex) {
   const h = (hex || "").replace("#", "");
   if (h.length < 6) return 0;
@@ -651,6 +662,16 @@ function App() {
   const [drafts, setDrafts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("cs_drafts") || "[]"); } catch (e) { return []; }
   });
+  const [genCount, setGenCount] = useState(() => {
+    try { return parseInt(localStorage.getItem("cs_count") || "0", 10) || 0; } catch (e) { return 0; }
+  });
+  const [lastSaved, setLastSaved] = useState(() => {
+    try { return localStorage.getItem("cs_last") ? JSON.parse(localStorage.getItem("cs_last")) : null; } catch (e) { return null; }
+  });
+  const [showIntro, setShowIntro] = useState(() => {
+    try { return !localStorage.getItem("cs_seen"); } catch (e) { return true; }
+  });
+  const [regenIdx, setRegenIdx] = useState(-1);
 
   const railRef = useRef(null);
   const slideRefs = useRef([]);
@@ -688,6 +709,11 @@ function App() {
       }
       slideRefs.current = [];
       setResult(r);
+      try {
+        const slim = { ...r, slides: r.slides.map((s) => ({ title: s.title, body: s.body, img: s.img })) };
+        localStorage.setItem("cs_last", JSON.stringify(slim));
+        const n = genCount + 1; setGenCount(n); localStorage.setItem("cs_count", String(n));
+      } catch (e) {}
     } catch (e) {
       setError(uiLang === "en" ? "Couldn't build the carousel. Try again or reduce the number of slides." : "Не вдалося зібрати карусель. Спробуй ще раз або зменш кількість слайдів.");
     } finally { setLoading(false); setGenStatus(""); }
@@ -722,6 +748,38 @@ function App() {
   }
   function deleteDraft(id) {
     persistDrafts(drafts.filter((x) => x.id !== id));
+  }
+
+  function restoreLast() {
+    if (!lastSaved) return;
+    slideRefs.current = []; setError(""); setGenStatus(""); setResult(lastSaved);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function regenSlide(i) {
+    if (!result || regenIdx !== -1) return;
+    setRegenIdx(i);
+    try {
+      const wr = WRITE_RULES[textLang] || WRITE_RULES.uk;
+      const others = result.slides.filter((_, k) => k !== i).map((s) => s.title).join(" | ");
+      const isCover = i === 0;
+      const prompt = `Ось карусель для Instagram на тему "${topic.trim()}". Перепиши ТІЛЬКИ слайд №${i + 1}${isCover ? " (це ОБКЛАДИНКА — потужний гачок, body порожній)" : ""}.
+Зроби його свіжим, сильним і НЕ схожим на інші слайди (уникай цих думок: ${others}).
+Пиши СУВОРО мовою ${wr.lname}. ${wr.purity}
+Поверни ЛИШЕ валідний JSON без пояснень: {"title":"...","body":"${isCover ? "" : "коротке речення або порожньо"}"}`;
+      const text = await callClaude(prompt, false);
+      const st = text.indexOf("{"), en = text.lastIndexOf("}");
+      if (st !== -1 && en !== -1) {
+        const obj = JSON.parse(text.slice(st, en + 1));
+        if (obj && obj.title) {
+          const slides = result.slides.map((s, k) => k === i ? { ...s, title: obj.title, body: isCover ? "" : (obj.body || "") } : s);
+          const nr = { ...result, slides };
+          setResult(nr);
+          try { localStorage.setItem("cs_last", JSON.stringify({ ...nr, slides: nr.slides.map((s) => ({ title: s.title, body: s.body, img: s.img })) })); } catch (e) {}
+        }
+      }
+    } catch (e) { /* лишаємо як було */ }
+    finally { setRegenIdx(-1); }
   }
 
   function loadExample() {
@@ -903,6 +961,26 @@ function App() {
             </p>
           </div>
         </header>
+
+        {showIntro && (
+          <div style={{ background: SHELL.panel, border: `1px solid ${SHELL.gold}`, borderRadius: 14, padding: 14, marginBottom: 16, position: "relative" }}>
+            <button onClick={() => { setShowIntro(false); try { localStorage.setItem("cs_seen", "1"); } catch (e) {} }}
+              style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: SHELL.sub, fontSize: 16, cursor: "pointer" }}>✕</button>
+            <p style={{ fontSize: 13, color: SHELL.ink, margin: "0 0 6px", fontWeight: 700 }}>{uiLang === "en" ? "👋 Quick start" : "👋 Швидкий старт"}</p>
+            <p style={{ fontSize: 12, color: SHELL.sub, margin: 0, lineHeight: 1.6 }}>
+              {uiLang === "en"
+                ? "1. Pick a niche and type a topic · 2. Choose format, style, colour · 3. Press “Create carousel”. Tap “Example” to autofill and see how it works."
+                : "1. Обери напрямок і впиши тему · 2. Постав формат, стиль, колір · 3. Тисни «Створити карусель». Кнопка «Приклад» заповнить поля, щоб побачити, як усе працює."}
+            </p>
+          </div>
+        )}
+
+        {!result && lastSaved && (
+          <button onClick={restoreLast}
+            style={{ width: "100%", marginBottom: 14, background: "transparent", color: SHELL.gold, border: `1px solid ${SHELL.gold}`, borderRadius: 12, padding: "11px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+            {uiLang === "en" ? "↩ Restore last carousel" : "↩ Відновити останню карусель"}
+          </button>
+        )}
 
         <Label>{ui.niche}</Label>
         <Row>
@@ -1123,6 +1201,7 @@ function App() {
           {uiLang === "en"
             ? "⏱ Generation usually takes 1–3 min. With Nano Banana images — a bit longer."
             : "⏱ Генерація зазвичай 1–3 хв. З картинками Nano Banana — трохи довше."}
+          {genCount > 0 ? (uiLang === "en" ? "  ·  " + genCount + " carousels created" : "  ·  створено каруселей: " + genCount) : ""}
         </p>
 
         {drafts.length > 0 && (
@@ -1166,24 +1245,37 @@ function App() {
                 <Chip active={viewMode === "rail"} onClick={() => setViewMode("rail")}>{uiLang === "en" ? "Strip" : "Стрічка"}</Chip>
               </div>
             </div>
-            <p style={{ fontSize: 11, color: SHELL.sub, margin: "0 0 12px", lineHeight: 1.5 }}>
+            <p style={{ fontSize: 11, color: SHELL.sub, margin: "0 0 6px", lineHeight: 1.5 }}>
               {uiLang === "en"
                 ? "💡 Previews look small here — the downloaded slide (1080px) has large, readable text."
                 : "💡 Прев'ю тут маленькі — на завантаженому слайді (1080px) текст великий і читабельний."}
             </p>
+            {(() => {
+              const hs = hookScore(result.slides[0]?.title, uiLang === "en");
+              return hs ? (
+                <p style={{ fontSize: 12, margin: "0 0 12px", color: hs.color, fontWeight: 600 }}>
+                  {(uiLang === "en" ? "Cover hook: " : "Гачок обкладинки: ") + hs.label}
+                </p>
+              ) : null;
+            })()}
 
             {viewMode === "grid" ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12, marginBottom: 8 }}>
                 {result.slides.map((s, i) => {
                   const chars = (s.title || "").length + (s.body || "").length;
                   return (
-                  <div key={i}>
+                  <div key={i} style={{ position: "relative" }}>
                     <div ref={(el) => (slideRefs.current[i] = el)}>
                       <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid" ratio={SIZES.find((z) => z.id === ratioId)?.css}
                         isCover={i === 0} isLast={i === result.slides.length - 1}
                         fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
                         imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} />
                     </div>
+                    <button onClick={() => regenSlide(i)} disabled={regenIdx !== -1}
+                      title={uiLang === "en" ? "Rewrite this slide" : "Переписати цей слайд"}
+                      style={{ position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 8, border: "none", background: "rgba(0,0,0,.55)", color: "#fff", fontSize: 14, cursor: regenIdx !== -1 ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {regenIdx === i ? "…" : "↻"}
+                    </button>
                     <div style={{ fontSize: 10, color: chars > 200 ? SHELL.live : SHELL.sub, textAlign: "center", marginTop: 4 }}>
                       {chars} {uiLang === "en" ? "chars" : "симв."}{chars > 200 ? (uiLang === "en" ? " · long" : " · багато") : ""}
                     </div>
