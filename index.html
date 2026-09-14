@@ -376,6 +376,17 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
     volume === "min" ? "Мінімум тексту: тільки сильний заголовок. body лишай порожнім або до 4 слів."
     : volume === "max" ? "Більше тексту: заголовок + 2-3 короткі речення в body. Без води."
     : "Середньо: заголовок + одне коротке речення в body.";
+  const structLine = structOn
+    ? `\nФІРМОВА СТРУКТУРА (дотримуйся суворо, розподіли ${count} слайдів по цих ролях пропорційно):
+• Слайд 1 — сильний гачок / провокаційне питання (тільки заголовок).
+• Слайди 2–3 — проблема або парадокс, у якому людина впізнає себе.
+• Слайди 4–6 — авторський розбір через мозок, мислення, емоції, сценарії або практику.
+• Слайд-самодіагностика — питання, тест або міні-вибір для читача.
+• Слайд-мікропрактика — маленька конкретна дія або новий погляд.
+• Передостанній слайд — висновок без моралізаторства.
+• Останній слайд — CTA: коментар, збереження, слово в Direct або запрошення на практику.
+Якщо слайдів менше за 10 — стисни ролі, але збережи логіку (гачок → впізнавання → розбір → самодіагностика → практика → висновок → CTA).`
+    : "";
 
   return `Ти — ${wr.role}. Ти пишеш вірусні каруселі для Instagram. Ти НЕ штучний інтелект — ти жива людина з голосом і думкою.
 
@@ -388,7 +399,7 @@ function buildPrompt({ niche, topic, format, count, trends, style, volume, image
 Стиль тексту: ${st?.label} (${st?.note})
 Обсяг тексту на слайд: ${vol?.label} — ${volLine}
 Кількість слайдів: ${count}
-${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}${offerLine}
+${trends ? "Спершу знайди в інтернеті свіжі кути й гачки по темі та вплети найсильніше." : ""}${structLine}${offerLine}
 
 ЯК ПИСАТИ (критично):
 - ${wr.purity}
@@ -611,6 +622,7 @@ function App() {
   const [offer, setOffer] = useState("");
   const [offerType, setOfferType] = useState("course");
   const [funnelOn, setFunnelOn] = useState(false);
+  const [structOn, setStructOn] = useState(false);
   const [style, setStyle] = useState("emotional");
   const [volume, setVolume] = useState("med");
   const [count, setCount] = useState(6);
@@ -618,7 +630,12 @@ function App() {
   const [trends, setTrends] = useState(false);
   const [imgMode, setImgMode] = useState("off"); // off | prompts | paid
   const [nbModel, setNbModel] = useState("lite");
-  const [accessCode, setAccessCode] = useState("");
+  const [accessCode, setAccessCode] = useState(() => {
+    try { return localStorage.getItem("cs_access") || ""; } catch (e) { return ""; }
+  });
+  const [rememberCode, setRememberCode] = useState(() => {
+    try { return !!localStorage.getItem("cs_access"); } catch (e) { return false; }
+  });
   const [promptLang, setPromptLang] = useState("en");
   const [themeId, setThemeId] = useState("noir");
   const [customBg, setCustomBg] = useState("#0E1630");
@@ -650,7 +667,7 @@ function App() {
     if (!activeNiche) return setError("Обери або впиши напрямок.");
     setError(""); setGenStatus(""); setLoading(true); setResult(null);
     try {
-      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType, funnelOn };
+      const base = { niche: activeNiche, topic: topic.trim(), format, count, trends, style, volume, lang: promptLang, textLang, gender, offer, offerType, funnelOn, structOn };
       setGenStatus(uiLang === "en" ? "Writing the text…" : "Пишу текст каруселі…");
       const r = await generateText(base);
       if (!r.slides || !r.slides.length) throw new Error("empty");
@@ -687,7 +704,7 @@ function App() {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
       when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, style, volume, count, ratioId, imgMode, promptLang, themeId, customBg, customAccent, fontId },
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, structOn, style, volume, count, ratioId, imgMode, promptLang, themeId, customBg, customAccent, fontId },
       result: slim,
     };
     persistDrafts([d, ...drafts].slice(0, 12));
@@ -697,7 +714,7 @@ function App() {
     const s = d.settings || {};
     setNiche(s.niche ?? "Психологія"); setCustomNiche(s.customNiche ?? ""); setTopic(s.topic ?? "");
     setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
-    setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStyle(s.style ?? "emotional");
+    setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStructOn(!!s.structOn); setStyle(s.style ?? "emotional");
     setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setRatioId(s.ratioId ?? "45"); setImgMode(s.imgMode ?? "off");
     setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setCustomBg(s.customBg ?? "#0E1630"); setCustomAccent(s.customAccent ?? "#C6A15B"); setFontId(s.fontId ?? "auto");
     slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
@@ -964,6 +981,9 @@ function App() {
 
         <ToggleRow on={trends} onToggle={() => setTrends((v) => !v)} color={SHELL.live}
           title={ui.trendsT} sub={ui.trendsS} />
+        <ToggleRow on={structOn} onToggle={() => setStructOn((v) => !v)} color={SHELL.gold}
+          title={uiLang === "en" ? "🧩 Signature structure" : "🧩 Фірмова структура"}
+          sub={uiLang === "en" ? "Hook → problem → breakdown → self-check → practice → takeaway → CTA" : "Гачок → проблема → розбір → самодіагностика → практика → висновок → CTA"} />
         <Label>{ui.images}</Label>
         <p style={{ fontSize: 12, color: SHELL.sub, margin: "-2px 0 8px" }}>{ui.imagesHint}</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1043,7 +1063,16 @@ function App() {
                   Реквізити: <span style={{ color: SHELL.ink }}>{PAY_INFO.requisites}</span>
                 </p>
               ) : null}
-              <Input value={accessCode} onChange={setAccessCode} placeholder="Введи код доступу після оплати" />
+              <Input value={accessCode} onChange={(v) => { setAccessCode(v); if (rememberCode) { try { localStorage.setItem("cs_access", v); } catch (e) {} } }} placeholder="Введи код доступу після оплати" />
+              <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12, color: SHELL.sub, cursor: "pointer" }}>
+                <input type="checkbox" checked={rememberCode}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setRememberCode(on);
+                    try { if (on) { localStorage.setItem("cs_access", accessCode); } else { localStorage.removeItem("cs_access"); } } catch (err) {}
+                  }} />
+                {uiLang === "en" ? "Remember the code on this device" : "Запам'ятати код на цьому пристрої"}
+              </label>
               <p style={{ fontSize: 11, color: SHELL.sub, margin: "6px 0 0", lineHeight: 1.5 }}>
                 Без коду картинки Nano Banana не генеруються — показується безкоштовний перегляд.
               </p>
