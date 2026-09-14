@@ -1,7 +1,7 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
 const MODEL = "gemini-1.5-flash"; // Найбільш сумісний та стабільний ідентифікатор для API
 const ENDPOINT =
-  "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
+  "https://generativelanguage.googleapis.com/v1/models/" + MODEL + ":generateContent";
 
 const MAX_RETRIES = 3;
 
