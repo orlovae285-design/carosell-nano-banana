@@ -1,3 +1,45 @@
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+
+  try {
+    // Безпечне читання body для різних версій Vercel
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch { body = {}; }
+    }
+    body = body || {};
+    
+    const { prompt, secret } = body;
+    const key = (process.env.GEMINI_KEY || "").trim();
+
+    if (!key) return res.status(500).json({ error: "GEMINI_KEY is missing" });
+    if (!process.env.STUDIO_SECRET) return res.status(500).json({ error: "STUDIO_SECRET is missing" });
+
+    if (!secret || secret !== process.env.STUDIO_SECRET) {
+      return res.status(401).json({ error: "unauthorized" });
+    }
+    if (!prompt) return res.status(400).json({ error: "no prompt" });
+
+    const out = await callGeminiText(key, prompt);
+    if (!out.ok) {
+      console.error("Gemini error status:", out.status, "text:", out.text);
+      const status = out.status === 429 ? 429 : 500;
+      return res.status(status).json({ error: safeMsg(out.text) || "gemini error" });
+    }
+
+    const text = (out.data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+    return res.status(200).json({ text });
+
+  } catch (e) {
+    // Цей блок зловить будь-яку системну помилку і запише її у логи замість мовчазного падіння 500
+    console.error("Handler crash stack:", e?.stack || e);
+    return res.status(500).json({ error: String(e?.message || e) });
+  }
+}
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
 // Текст каруселі через Gemini: автоповтор при 429 + низький рівень "мислення" +
 // піднятий ліміт відповіді (щоб 15-20 слайдів не обрізались).
