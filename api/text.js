@@ -1,21 +1,17 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-// Текст каруселі через Gemini. САМ ПЕРЕБИРАЄ кілька моделей: якщо якась
-// повертає 404 (model not found) — пробує наступну. Тож поломки через
-// зникнення моделі більше не буде. + автоповтор при 429/503/500.
+// Текст каруселі через Gemini. Перебирає моделі: на 404 (немає моделі) або
+// 429 (ліміт/квота цієї моделі) — переходить до наступної.
+// gemini-2.5-flash перша: це стабільна модель зі стандартною квотою Tier 1.
 
-// Перелік моделей за пріоритетом (перша робоча буде використана).
-// Якщо колись усі перестануть працювати — просто додай нову назву на початок.
 const MODELS = [
   "gemini-2.5-flash",
-  "gemini-3.5-flash",
-  "gemini-3.7-flash",
-  "gemini-flash-latest",
   "gemini-2.5-flash-lite",
   "gemini-3.6-flash",
+  "gemini-3.7-flash",
+  "gemini-flash-latest",
 ];
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-const MAX_RETRIES = 3;
 const MAX_OUTPUT_TOKENS = 16384;
 
 async function callOnce(model, key, prompt) {
@@ -35,33 +31,28 @@ async function callOnce(model, key, prompt) {
 async function callGeminiText(key, prompt) {
   let last = null;
   for (const model of MODELS) {
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       let r;
       try {
         r = await callOnce(model, key, prompt);
       } catch (e) {
         last = { status: 0, text: String(e && e.message || e), model };
-        break; // мережева помилка — до наступної моделі
+        break;
       }
       if (r.ok) return { ok: true, data: await r.json(), model };
 
       const errText = await r.text();
       last = { status: r.status, text: errText, model };
 
-      // 404 = цієї моделі немає → пробуємо наступну модель
-      if (r.status === 404 || r.status === 400) break;
-
-      // 429/503/500 = зайнято → зачекати й повторити ту саму модель
-      if (r.status === 429 || r.status === 503 || r.status === 500) {
-        const waitMs = Math.round(600 * Math.pow(2, attempt) + Math.random() * 900);
-        await new Promise((res) => setTimeout(res, waitMs));
-        continue;
+      if (r.status === 503 || r.status === 500) {
+        if (attempt === 0) { await new Promise((res) => setTimeout(res, 800 + Math.random() * 500)); continue; }
+        break;
       }
-      // інша помилка (401 тощо) — далі перебирати сенсу немає
-      return { ok: false, status: r.status, text: errText, model };
+      // 404/400/429 — ця модель зараз недоступна → одразу наступна модель
+      break;
     }
   }
-  return { ok: false, status: last?.status || 404, text: last?.text || "no working model found", model: last?.model };
+  return { ok: false, status: last?.status || 404, text: last?.text || "no working model", model: last?.model };
 }
 
 export default async function handler(req, res) {
@@ -91,8 +82,11 @@ export default async function handler(req, res) {
     const out = await callGeminiText(key, prompt);
     if (!out.ok) {
       console.error("Gemini error:", out.status, out.model, out.text);
-      const status = out.status === 429 ? 429 : 500;
-      return res.status(status).json({ error: (safeMsg(out.text) || "gemini error") + " (models tried: " + MODELS.join(", ") + ")" });
+      const full = safeMsg(out.text) || "";
+      if (out.status === 429) {
+        return res.status(429).json({ error: "Ліміт/квота Gemini (429): " + full + " — зачекай 1-2 хв або перевір квоти в Google Cloud." });
+      }
+      return res.status(500).json({ error: (full || "gemini error") + " [спроби: " + MODELS.join(", ") + "]" });
     }
 
     const text =
