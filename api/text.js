@@ -1,10 +1,11 @@
 // api/text.js — Vercel serverless function (Node), без зовнішніх пакетів
-const MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-1.5-flash"; // Найбільш сумісний та стабільний ідентифікатор для API
 const ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";
 
 const MAX_RETRIES = 3;
-const MAX_OUTPUT_TOKENS = 8192;
+
+const MAX_OUTPUT_TOKENS = 4096;   // Зменшуємо з 8192, щоб не вибирати ліміт TPM (токенів на хвилину)
 
 async function callGeminiText(key, prompt) {
   let last = null;
