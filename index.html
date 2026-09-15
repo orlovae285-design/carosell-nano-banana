@@ -548,15 +548,16 @@ function Slide({ data, index, total, theme, isCover, isLast, fontCss, imgSrc, va
         <>
           <img src={imgSrc} alt="" loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          {tint && <div style={{ position: "absolute", inset: 0, background: hexRgba(tint, 0.45) }} />}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.30) 45%, rgba(0,0,0,.78) 100%)" }} />
+          {tint && <div style={{ position: "absolute", inset: 0, background: hexRgba(tint, 0.28), mixBlendMode: "soft-light" }} />}
+          {tint && <div style={{ position: "absolute", inset: 0, background: hexRgba(tint, 0.14) }} />}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.20) 0%, rgba(0,0,0,.24) 45%, rgba(0,0,0,.72) 100%)" }} />
         </>
       )}
 
       <div style={{ position: "relative", height: "100%", padding: "8% 9%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "3%" }}>
         <span style={{ width: "10%", height: 2, background: t.accent, borderRadius: 2, display: "block", flex: "0 0 auto" }} />
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "visible", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "6% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(120% 90% at 50% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.22) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "visible", display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: 14, padding: hasImg ? "6% 5%" : 0, margin: hasImg ? "0 -3%" : 0, background: hasImg ? "radial-gradient(125% 95% at 50% 58%, rgba(0,0,0,.62) 0%, rgba(0,0,0,.34) 55%, rgba(0,0,0,0) 100%)" : "transparent" }}>
           <p style={{ fontFamily: titleFont, margin: 0, fontSize: isCover ? "clamp(14px, 8cqw, 28px)" : "clamp(13px, 7cqw, 23px)", lineHeight: 1.14, fontWeight: isCover ? t.cover : 700, textShadow: shadow, overflowWrap: "normal", wordBreak: "keep-all", hyphens: "manual" }}>
             {data.title}
           </p>
@@ -658,6 +659,7 @@ function App() {
   const [themeId, setThemeId] = useState("noir");
   const [customBg, setCustomBg] = useState("#0E1630");
   const [customAccent, setCustomAccent] = useState("#C6A15B");
+  const [tintOn, setTintOn] = useState(false);
   const [fontId, setFontId] = useState("auto");
   const [viewMode, setViewMode] = useState("grid");
 
@@ -737,7 +739,7 @@ function App() {
       id: Date.now(),
       title: (topic.trim() || (result.slides[0] && result.slides[0].title) || "Чернетка").slice(0, 42),
       when: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, structOn, style, volume, count, ratioId, imgMode, promptLang, themeId, customBg, customAccent, fontId },
+      settings: { niche, customNiche, topic, format, gender, textLang, offer, offerType, funnelOn, structOn, style, volume, count, ratioId, imgMode, promptLang, themeId, customBg, customAccent, tintOn, fontId },
       result: slim,
     };
     persistDrafts([d, ...drafts].slice(0, 12));
@@ -749,7 +751,7 @@ function App() {
     setFormat(s.format ?? "hpsr"); setGender(s.gender ?? "f"); setTextLang(s.textLang ?? "uk");
     setOffer(s.offer ?? ""); setOfferType(s.offerType ?? "course"); setFunnelOn(!!s.funnelOn); setStructOn(!!s.structOn); setStyle(s.style ?? "emotional");
     setVolume(s.volume ?? "med"); setCount(s.count ?? 6); setRatioId(s.ratioId ?? "45"); setImgMode(s.imgMode ?? "off");
-    setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setCustomBg(s.customBg ?? "#0E1630"); setCustomAccent(s.customAccent ?? "#C6A15B"); setFontId(s.fontId ?? "auto");
+    setPromptLang(s.promptLang ?? "en"); setThemeId(s.themeId ?? "noir"); setCustomBg(s.customBg ?? "#0E1630"); setCustomAccent(s.customAccent ?? "#C6A15B"); setTintOn(!!s.tintOn); setFontId(s.fontId ?? "auto");
     slideRefs.current = []; setError(""); setGenStatus(""); setResult(d.result || null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1207,6 +1209,12 @@ function App() {
                 ? "Pick with the swatch or paste an exact HEX code (e.g. #E24236). Text colour is auto-chosen for readability."
                 : "Обери піпеткою або встав точний HEX-код (напр. #E24236). Колір тексту підбирається автоматично для читабельності."}
             </span>
+            {imagesOn && (
+              <label style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 100%", fontSize: 13, color: SHELL.ink, cursor: "pointer", marginTop: 2 }}>
+                <input type="checkbox" checked={tintOn} onChange={(e) => setTintOn(e.target.checked)} />
+                {uiLang === "en" ? "Tint photos with this colour (brand look)" : "Тонувати фото цим кольором (фірмовий вигляд)"}
+              </label>
+            )}
           </div>
         )}
 
@@ -1296,7 +1304,7 @@ function App() {
                       <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="grid" ratio={SIZES.find((z) => z.id === ratioId)?.css}
                         isCover={i === 0} isLast={i === result.slides.length - 1}
                         fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
-                        imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} tint={themeId === "custom" ? customBg : null} />
+                        imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} tint={themeId === "custom" && tintOn ? customBg : null} />
                     </div>
                     <button onClick={() => regenSlide(i)} disabled={regenIdx !== -1}
                       title={uiLang === "en" ? "Rewrite this slide" : "Переписати цей слайд"}
@@ -1318,7 +1326,7 @@ function App() {
                     <Slide data={s} index={i} total={result.slides.length} theme={theme} variant="rail" ratio={SIZES.find((z) => z.id === ratioId)?.css}
                       isCover={i === 0} isLast={i === result.slides.length - 1}
                       fontCss={fontId === "auto" ? null : FONTS.find((f) => f.id === fontId)?.css}
-                      imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} tint={themeId === "custom" ? customBg : null} />
+                      imgSrc={imgMode === "paid" && s.img ? (s.realImg || imgUrl(s.img, i + 1)) : null} tint={themeId === "custom" && tintOn ? customBg : null} />
                   </div>
                 ))}
               </div>
