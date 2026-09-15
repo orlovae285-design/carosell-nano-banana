@@ -1166,19 +1166,29 @@ function App() {
           <span title={theme.name} style={{ width: 46, height: 46, borderRadius: 12, flex: "0 0 auto", background: theme.bg, border: `1px solid ${SHELL.line}`, boxShadow: "0 4px 12px rgba(0,0,0,.35)" }} />
         </div>
         {themeId === "custom" && (
-          <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: SHELL.ink }}>
-              <input type="color" value={customBg} onChange={(e) => setCustomBg(e.target.value)}
-                style={{ width: 40, height: 32, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer" }} />
-              {uiLang === "en" ? "Background" : "Фон"}
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: SHELL.ink }}>
-              <input type="color" value={customAccent} onChange={(e) => setCustomAccent(e.target.value)}
-                style={{ width: 40, height: 32, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer" }} />
-              {uiLang === "en" ? "Accent" : "Акцент"}
-            </label>
+          <div style={{ display: "flex", gap: 14, marginTop: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <span style={{ fontSize: 12, color: SHELL.sub }}>{uiLang === "en" ? "Background" : "Фон"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(customBg) ? customBg : "#0E1630"} onChange={(e) => setCustomBg(e.target.value)}
+                  style={{ width: 38, height: 34, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer", flex: "0 0 auto" }} />
+                <input value={customBg} onChange={(e) => { let v = e.target.value.trim(); if (v && v[0] !== "#") v = "#" + v; setCustomBg(v); }} placeholder="#0E1630" maxLength={7}
+                  style={{ width: 92, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 8, padding: "8px 10px", fontSize: 13 }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <span style={{ fontSize: 12, color: SHELL.sub }}>{uiLang === "en" ? "Accent" : "Акцент"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(customAccent) ? customAccent : "#C6A15B"} onChange={(e) => setCustomAccent(e.target.value)}
+                  style={{ width: 38, height: 34, border: `1px solid ${SHELL.line}`, borderRadius: 8, background: "none", cursor: "pointer", flex: "0 0 auto" }} />
+                <input value={customAccent} onChange={(e) => { let v = e.target.value.trim(); if (v && v[0] !== "#") v = "#" + v; setCustomAccent(v); }} placeholder="#C6A15B" maxLength={7}
+                  style={{ width: 92, background: SHELL.panel, color: SHELL.ink, border: `1px solid ${SHELL.line}`, borderRadius: 8, padding: "8px 10px", fontSize: 13 }} />
+              </div>
+            </div>
             <span style={{ fontSize: 11, color: SHELL.sub, alignSelf: "center", flex: "1 1 100%", lineHeight: 1.5 }}>
-              {uiLang === "en" ? "Text color is picked automatically (light/dark) for readability." : "Колір тексту підбирається автоматично (світлий/темний) для читабельності."}
+              {uiLang === "en"
+                ? "Pick with the swatch or paste an exact HEX code (e.g. #E24236). Text colour is auto-chosen for readability."
+                : "Обери піпеткою або встав точний HEX-код (напр. #E24236). Колір тексту підбирається автоматично для читабельності."}
             </span>
           </div>
         )}
